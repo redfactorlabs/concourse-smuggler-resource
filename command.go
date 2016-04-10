@@ -1,13 +1,12 @@
-package command
+package smuggler
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/redfactorlabs/concourse-smuggler-resource"
 )
 
 type SmugglerCommand struct {
@@ -15,11 +14,15 @@ type SmugglerCommand struct {
 	lastCommandCombinedOuput string
 }
 
+func NewSmugglerCommand() *SmugglerCommand {
+	return &SmugglerCommand{}
+}
+
 func (command *SmugglerCommand) LastCommandCombinedOuput() string {
 	return command.lastCommandCombinedOuput
 }
 
-func (command *SmugglerCommand) Run(commandDefinition smuggler.CommandDefinition, params map[string]string) error {
+func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]string) error {
 	path := commandDefinition.Path
 	args := commandDefinition.Args
 
@@ -41,4 +44,18 @@ func (command *SmugglerCommand) Run(commandDefinition smuggler.CommandDefinition
 	command.lastCommandCombinedOuput = string(output)
 	log.Printf("[INFO] Output '%s'", command.LastCommandCombinedOuput())
 	return nil
+}
+
+func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, error) {
+	if ok, message := request.Source.IsValid(); !ok {
+		return CheckResponse{}, errors.New(message)
+	}
+	smugglerConfig := request.Source.SmugglerConfig
+	if smugglerConfig.CheckCommand.IsDefined() {
+		err := command.Run(smugglerConfig.CheckCommand, request.Source.ExtraParams)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return CheckResponse{}, nil
 }

@@ -1,4 +1,4 @@
-package check_test
+package smuggler_test
 
 import (
 	"io/ioutil"
@@ -24,9 +24,9 @@ var _ = AfterSuite(func() {
 	gexec.CleanupBuildArtifacts()
 })
 
-func TestCheck(t *testing.T) {
+func TestSmuggler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Check Suite")
+	RunSpecs(t, "Smuggler Suite")
 }
 
 func Fixture(filename string) string {
