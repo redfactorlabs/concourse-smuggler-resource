@@ -28,6 +28,7 @@ func ResourceSourceFromYamlManifest(yaml_manifest string, resource_name string) 
 	for _, r := range resourceDefinition.Resources {
 		if r.Name == resource_name {
 			resource = &r
+			break
 		}
 	}
 	if resource == nil {
