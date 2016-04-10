@@ -40,4 +40,11 @@ var _ = Describe("Check Command", func() {
 		checkCommand := NewCheckCommand()
 		checkCommand.Run(requestBasicEcho)
 	})
+	It("executes a basic echo command from json and returns the output", func() {
+		requestBasicEcho, err := NewCheckRequestFromJson(requestBasicEchoJson)
+		Ω(err).ShouldNot(HaveOccurred())
+		checkCommand := NewCheckCommand()
+		checkCommand.Run(requestBasicEcho)
+		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+	})
 })
