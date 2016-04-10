@@ -30,9 +30,11 @@ var _ = Describe("Check Command", func() {
 
 var requestBasicEcho = CheckRequest{
 	Source: Source{
-		CheckCommand: CommandDefinition{
-			Path: "bash",
-			Args: []string{"-e", "-c", "echo basic echo test"},
+		SmugglerConfig: SmugglerConfig{
+			CheckCommand: CommandDefinition{
+				Path: "bash",
+				Args: []string{"-e", "-c", "echo basic echo test"},
+			},
 		},
 	},
 }
@@ -40,10 +42,12 @@ var requestBasicEcho = CheckRequest{
 var requestBasicEchoJson = `
 {
   "source": {
-    "check": {
-		"path": "sh",
-		"args": [ "-e", "-c", "echo basic echo test" ]
-	}
+    "smuggler_config": {
+      "check": {
+	"path": "sh",
+	"args": [ "-e", "-c", "echo basic echo test" ]
+      }
+    }
   },
   "version": {}
 }

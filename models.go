@@ -6,6 +6,10 @@ import (
 )
 
 type Source struct {
+	SmugglerConfig SmugglerConfig `json:"smuggler_config,omitempty"`
+}
+
+type SmugglerConfig struct {
 	CheckCommand CommandDefinition `json:"check,omitempty"`
 	InCommand    CommandDefinition `json:"in,omitempty"`
 	OutCommand   CommandDefinition `json:"out,omitempty"`

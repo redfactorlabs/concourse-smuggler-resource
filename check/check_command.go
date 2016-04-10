@@ -26,10 +26,10 @@ func (command *CheckCommand) Run(request smuggler.CheckRequest) (smuggler.CheckR
 	if ok, message := request.Source.IsValid(); !ok {
 		return smuggler.CheckResponse{}, errors.New(message)
 	}
-
-	if request.Source.CheckCommand.IsDefined() {
-		path := request.Source.CheckCommand.Path
-		args := request.Source.CheckCommand.Args
+	smugglerConfig := request.Source.SmugglerConfig
+	if smugglerConfig.CheckCommand.IsDefined() {
+		path := smugglerConfig.CheckCommand.Path
+		args := smugglerConfig.CheckCommand.Args
 		log.Printf("[INFO] Running '%s %s'", path, strings.Join(args, " "))
 		command.lastCommand = exec.Command(path, args...)
 		output, err := command.lastCommand.CombinedOutput()
@@ -37,7 +37,7 @@ func (command *CheckCommand) Run(request smuggler.CheckRequest) (smuggler.CheckR
 			return nil, err
 		}
 		command.lastCommandCombinedOuput = string(output)
-		log.Printf("[INFO] Output '%s'", command.lastCommandCombinedOuput)
+		log.Printf("[INFO] Output '%s'", command.LastCommandCombinedOuput())
 	}
 	return smuggler.CheckResponse{}, nil
 }
