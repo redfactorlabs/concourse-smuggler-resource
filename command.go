@@ -119,6 +119,47 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 	return response, nil
 }
 
+func (command *SmugglerCommand) RunOut(request OutRequest) (OutResponse, error) {
+	var response = OutResponse{}
+
+	if ok, message := request.Source.IsValid(); !ok {
+		return response, errors.New(message)
+	}
+
+	smugglerConfig := request.Source.SmugglerConfig
+	if !smugglerConfig.OutCommand.IsDefined() {
+		return response, nil
+	}
+	outputDir, err := ioutil.TempDir("", "smuggler-run")
+	if err != nil {
+		return response, err
+	}
+	defer os.RemoveAll(outputDir)
+
+	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params["OUTPUT_DIR"] = outputDir
+
+	err = command.Run(smugglerConfig.OutCommand, params)
+	if err != nil {
+		return response, err
+	}
+
+	versions, err := readVersions(filepath.Join(outputDir, "version"))
+	if err != nil {
+		return response, err
+	}
+	if len(versions) == 0 {
+		return response, fmt.Errorf("No version found in '%s'", filepath.Join(outputDir, "version"))
+	}
+	response.Version = versions[0]
+	response.Metadata, err = readMetadata(filepath.Join(outputDir, "metadata"))
+	if err != nil {
+		return response, err
+	}
+
+	return response, nil
+}
+
 func copyMaps(maps ...map[string]string) map[string]string {
 	total_len := 0
 	for _, m := range maps {
