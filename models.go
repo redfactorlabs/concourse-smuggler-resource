@@ -64,8 +64,8 @@ func NewInRequestFromJson(s string) (InRequest, error) {
 }
 
 type InResponse struct {
-	Version  Version      `json:"version"`
-	Metadata MetadataPair `json:"metadata"`
+	Version  Version        `json:"version"`
+	Metadata []MetadataPair `json:"metadata"`
 }
 
 type OutRequest struct {
@@ -80,6 +80,6 @@ func NewOutRequestFromJson(s string) (OutRequest, error) {
 }
 
 type OutResponse struct {
-	Version  Version      `json:"version"`
-	Metadata MetadataPair `json:"metadata"`
+	Version  Version        `json:"version"`
+	Metadata []MetadataPair `json:"metadata"`
 }
