@@ -74,12 +74,9 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 		return response, err
 	}
 
-	if versionLines, err := readAndTrimAllLines(filepath.Join(outputDir, "versions")); err != nil {
+	response, err = readVersions(filepath.Join(outputDir, "versions"))
+	if err != nil {
 		return response, err
-	} else {
-		for _, l := range versionLines {
-			response = append(response, Version{VersionID: l})
-		}
 	}
 
 	return response, nil
@@ -89,13 +86,14 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 	var response = InResponse{}
 
 	if ok, message := request.Source.IsValid(); !ok {
-		return InResponse{}, errors.New(message)
+		return response, errors.New(message)
 	}
 
 	smugglerConfig := request.Source.SmugglerConfig
 	if !smugglerConfig.InCommand.IsDefined() {
 		return response, nil
 	}
+
 	outputDir, err := ioutil.TempDir("", "smuggler-run")
 	if err != nil {
 		return response, err
@@ -133,6 +131,18 @@ func copyMaps(maps ...map[string]string) map[string]string {
 		}
 	}
 	return result
+}
+
+func readVersions(versionsFile string) ([]Version, error) {
+	result := []Version{}
+	if versionLines, err := readAndTrimAllLines(versionsFile); err != nil {
+		return result, err
+	} else {
+		for _, l := range versionLines {
+			result = append(result, Version{VersionID: l})
+		}
+	}
+	return result, nil
 }
 
 func readMetadata(metadataFile string) ([]MetadataPair, error) {
