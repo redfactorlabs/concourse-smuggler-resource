@@ -112,20 +112,11 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 
 	// We always use the same version that we get in the request
 	response.Version = request.Version
-
-	if metadataLines, err := readAndTrimAllLines(filepath.Join(outputDir, "metadata")); err != nil {
+	response.Metadata, err = readMetadata(outputDir)
+	if err != nil {
 		return response, err
-	} else {
-		for _, l := range metadataLines {
-			s := strings.SplitN(l, "=", 2)
-			k, v := "", ""
-			k = strings.Trim(s[0], " \t")
-			if len(s) > 1 {
-				v = strings.Trim(s[1], " \t")
-			}
-			response.Metadata = append(response.Metadata, MetadataPair{Name: k, Value: v})
-		}
 	}
+
 	return response, nil
 }
 
@@ -141,6 +132,24 @@ func copyMaps(maps ...map[string]string) map[string]string {
 		}
 	}
 	return result
+}
+
+func readMetadata(outputDir string) ([]MetadataPair, error) {
+	result := []MetadataPair{}
+	if metadataLines, err := readAndTrimAllLines(filepath.Join(outputDir, "metadata")); err != nil {
+		return result, err
+	} else {
+		for _, l := range metadataLines {
+			s := strings.SplitN(l, "=", 2)
+			k, v := "", ""
+			k = strings.Trim(s[0], " \t")
+			if len(s) > 1 {
+				v = strings.Trim(s[1], " \t")
+			}
+			result = append(result, MetadataPair{Name: k, Value: v})
+		}
+	}
+	return result, nil
 }
 
 func readAndTrimAllLines(filename string) ([]string, error) {
