@@ -33,7 +33,10 @@ type Version struct {
 	VersionID string `json:"version_id,omitempty"`
 }
 
-type StringParams map[string]string
+type MetadataPair struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
 
 type CheckRequest struct {
 	Source  Source  `json:"source"`
@@ -41,9 +44,42 @@ type CheckRequest struct {
 }
 
 func NewCheckRequestFromJson(s string) (CheckRequest, error) {
-	checkRequest := CheckRequest{}
-	err := json.NewDecoder(strings.NewReader(s)).Decode(&checkRequest)
-	return checkRequest, err
+	request := CheckRequest{}
+	err := json.NewDecoder(strings.NewReader(s)).Decode(&request)
+	return request, err
 }
 
 type CheckResponse []Version
+
+type InRequest struct {
+	Source  Source            `json:"source"`
+	Version Version           `json:"version"`
+	Params  map[string]string `json:"params,omitempty"`
+}
+
+func NewInRequestFromJson(s string) (InRequest, error) {
+	request := InRequest{}
+	err := json.NewDecoder(strings.NewReader(s)).Decode(&request)
+	return request, err
+}
+
+type InResponse struct {
+	Version  Version      `json:"version"`
+	Metadata MetadataPair `json:"metadata"`
+}
+
+type OutRequest struct {
+	Source Source            `json:"source"`
+	Params map[string]string `json:"params,omitempty"`
+}
+
+func NewOutRequestFromJson(s string) (OutRequest, error) {
+	request := OutRequest{}
+	err := json.NewDecoder(strings.NewReader(s)).Decode(&request)
+	return request, err
+}
+
+type OutResponse struct {
+	Version  Version      `json:"version"`
+	Metadata MetadataPair `json:"metadata"`
+}

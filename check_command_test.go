@@ -131,4 +131,34 @@ resources:
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
 	})
+	It("it returns versions as list of strings", func() {
+		manifest := `
+resources:
+- name: output_versions
+  type: smuggler
+  source:
+    smuggler_config:
+      check:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+          echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/versions
+          echo -e "\t 1.2.4  \n" >> ${SMUGGLER_OUTPUT_DIR}/versions
+`
+		source, err := ResourceSourceFromYamlManifest(manifest, "output_versions")
+		Ω(err).ShouldNot(HaveOccurred())
+		request := CheckRequest{
+			Source: *source,
+		}
+		checkCommand := NewSmugglerCommand()
+		checkResponse, err := checkCommand.RunCheck(request)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+
+		Ω(checkResponse).Should(BeEquivalentTo(vs))
+	})
 })
