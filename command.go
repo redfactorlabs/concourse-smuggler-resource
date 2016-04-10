@@ -113,7 +113,7 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 
 	// We always use the same version that we get in the request
 	response.Version = request.Version
-	response.Metadata, err = readMetadata(outputDir)
+	response.Metadata, err = readMetadata(filepath.Join(outputDir, "metadata"))
 	if err != nil {
 		return response, err
 	}
@@ -135,9 +135,9 @@ func copyMaps(maps ...map[string]string) map[string]string {
 	return result
 }
 
-func readMetadata(outputDir string) ([]MetadataPair, error) {
+func readMetadata(metadataFile string) ([]MetadataPair, error) {
 	result := []MetadataPair{}
-	if metadataLines, err := readAndTrimAllLines(filepath.Join(outputDir, "metadata")); err != nil {
+	if metadataLines, err := readAndTrimAllLines(metadataFile); err != nil {
 		return result, err
 	} else {
 		for _, l := range metadataLines {
