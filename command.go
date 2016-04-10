@@ -103,6 +103,7 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 	defer os.RemoveAll(outputDir)
 
 	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params["VERSION_ID"] = request.Version.VersionID
 	params["OUTPUT_DIR"] = outputDir
 
 	err = command.Run(smugglerConfig.InCommand, params)

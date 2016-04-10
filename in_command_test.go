@@ -9,6 +9,34 @@ import (
 )
 
 var _ = Describe("In Command", func() {
+	It("it gets the version ID", func() {
+		manifest := `
+resources:
+- name: output_versions
+  type: smuggler
+  source:
+    smuggler_config:
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo "version=$SMUGGLER_VERSION_ID"
+`
+		source, err := ResourceSourceFromYamlManifest(manifest, "output_versions")
+		Ω(err).ShouldNot(HaveOccurred())
+		request := InRequest{
+			Source:  *source,
+			Version: Version{VersionID: "1.2.3"},
+		}
+		checkCommand := NewSmugglerCommand()
+		_, err = checkCommand.RunIn(request)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("version=1.2.3"))
+	})
+
 	It("it returns metadata as list of strings", func() {
 		manifest := `
 resources:
