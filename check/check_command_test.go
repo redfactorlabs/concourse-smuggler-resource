@@ -28,7 +28,7 @@ var _ = Describe("Check Command", func() {
 		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
 	})
 	It("executes a basic echo command from yaml manifest and returns the output", func() {
-		source, err := ResourceSourceFromYamlManifest(resourceDefinitionBasicEcho, "simple_echo")
+		source, err := ResourceSourceFromYamlManifest(manifestResourceDefinitions, "simple_echo")
 		Ω(err).ShouldNot(HaveOccurred())
 		requestBasicEcho := CheckRequest{
 			Source: *source,
@@ -36,6 +36,17 @@ var _ = Describe("Check Command", func() {
 		checkCommand := NewCheckCommand()
 		checkCommand.Run(requestBasicEcho)
 		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+	})
+	It("it can run multiple commands passed in multiple lines", func() {
+		source, err := ResourceSourceFromYamlManifest(manifestResourceDefinitions, "multiline_command")
+		Ω(err).ShouldNot(HaveOccurred())
+		requestBasicEcho := CheckRequest{
+			Source: *source,
+		}
+		checkCommand := NewCheckCommand()
+		checkCommand.Run(requestBasicEcho)
+		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("line1"))
+		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("line2"))
 	})
 })
 
@@ -64,7 +75,7 @@ var requestBasicEchoJson = `
 }
 `
 
-var resourceDefinitionBasicEcho = `
+var manifestResourceDefinitions = `
 resources:
 - name: simple_echo
   type: smuggler
@@ -77,4 +88,16 @@ resources:
         - -c
         - |
           echo basic echo test
+- name: multiline_command
+  type: smuggler
+  source:
+    smuggler_config:
+      check:
+        path: sh
+        args:
+        - -e
+        - -c
+        - |
+          echo line1
+          echo line2
 `
