@@ -6,7 +6,8 @@ import (
 )
 
 type Source struct {
-	SmugglerConfig SmugglerConfig `json:"smuggler_config,omitempty"`
+	SmugglerConfig SmugglerConfig    `json:"smuggler_config,omitempty"`
+	ExtraParams    map[string]string `json:"extra_params,omitempty"`
 }
 
 type SmugglerConfig struct {
@@ -31,6 +32,8 @@ func (commandDefinition CommandDefinition) IsDefined() bool {
 type Version struct {
 	VersionID string `json:"version_id,omitempty"`
 }
+
+type StringParams map[string]string
 
 type CheckRequest struct {
 	Source  Source  `json:"source"`

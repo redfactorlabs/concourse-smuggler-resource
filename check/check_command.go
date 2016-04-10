@@ -21,7 +21,7 @@ func (command *CheckCommand) Run(request smuggler.CheckRequest) (smuggler.CheckR
 	}
 	smugglerConfig := request.Source.SmugglerConfig
 	if smugglerConfig.CheckCommand.IsDefined() {
-		err := command.SmugglerCommand.Run(smugglerConfig.CheckCommand)
+		err := command.SmugglerCommand.Run(smugglerConfig.CheckCommand, request.Source.ExtraParams)
 		if err != nil {
 			return nil, err
 		}

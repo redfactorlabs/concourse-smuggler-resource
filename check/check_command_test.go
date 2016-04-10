@@ -48,6 +48,38 @@ var _ = Describe("Check Command", func() {
 		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("line1"))
 		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("line2"))
 	})
+	It("it can passes the resource params as environment variables", func() {
+		manifest := `
+resources:
+- name: pass_params
+  type: smuggler
+  source:
+    extra_params:
+      param1: test
+      param2: true
+      param3: 123
+    smuggler_config:
+      check:
+        path: sh
+        args:
+        - -e
+        - -c
+        - |
+          echo "param1=${SMUGGLER_param1}"
+          echo "param2=${SMUGGLER_param2}"
+          echo "param3=${SMUGGLER_param3}"
+`
+		source, err := ResourceSourceFromYamlManifest(manifest, "pass_params")
+		Ω(err).ShouldNot(HaveOccurred())
+		request := CheckRequest{
+			Source: *source,
+		}
+		checkCommand := NewCheckCommand()
+		checkCommand.Run(request)
+		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
+		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
+		Ω(checkCommand.SmugglerCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
+	})
 })
 
 var requestBasicEcho = CheckRequest{
