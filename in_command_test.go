@@ -71,4 +71,45 @@ resources:
 
 		Ω(checkResponse.Metadata).Should(BeEquivalentTo(vs))
 	})
+	It("passes the resource params as environment variables", func() {
+		manifest := `
+resources:
+- name: pass_params
+  type: smuggler
+  source:
+    extra_params:
+      param1: test
+      param2: true
+      param3: 123
+    smuggler_config:
+      in:
+        path: sh
+        args:
+        - -e
+        - -c
+        - |
+          echo "param1=${SMUGGLER_param1}"
+          echo "param2=${SMUGGLER_param2}"
+          echo "param3=${SMUGGLER_param3}"
+          echo "param4=${SMUGGLER_param4}"
+          echo "param5=${SMUGGLER_param5}"
+`
+		source, err := ResourceSourceFromYamlManifest(manifest, "pass_params")
+		Ω(err).ShouldNot(HaveOccurred())
+		request := InRequest{
+			Source:  *source,
+			Version: Version{VersionID: "1.2.3"},
+			Params: map[string]string{
+				"param4": "val4",
+				"param5": "something with spaces",
+			},
+		}
+		checkCommand := NewSmugglerCommand()
+		checkCommand.RunIn(request)
+		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
+		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
+		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
+		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param4=val4"))
+		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param5=something with spaces"))
+	})
 })
