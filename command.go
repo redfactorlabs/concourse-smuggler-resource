@@ -24,12 +24,11 @@ func (command *SmugglerCommand) LastCommandCombinedOuput() string {
 	return command.lastCommandCombinedOuput
 }
 
-func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]string, outputDir string) error {
+func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]string) error {
 	path := commandDefinition.Path
 	args := commandDefinition.Args
 
 	params_env := make([]string, len(params)+1)
-	params_env = append(params_env, fmt.Sprintf("SMUGGLER_OUTPUT_DIR=%s", outputDir))
 	for k, v := range params {
 		params_env = append(params_env, fmt.Sprintf("SMUGGLER_%s=%s", k, v))
 	}
@@ -57,27 +56,32 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 	}
 
 	smugglerConfig := request.Source.SmugglerConfig
-	if smugglerConfig.CheckCommand.IsDefined() {
-		outputDir, err := ioutil.TempDir("", "smuggler-run")
-		if err != nil {
-			return response, err
-		}
-		defer os.RemoveAll(outputDir)
-
-		err = command.Run(smugglerConfig.CheckCommand, request.Source.ExtraParams, outputDir)
-		if err != nil {
-			return response, err
-		}
-
-		if versionLines, err := readAndTrimAllLines(filepath.Join(outputDir, "versions")); err != nil {
-			return response, err
-		} else {
-			for _, l := range versionLines {
-				response = append(response, Version{VersionID: l})
-			}
-		}
-
+	if !smugglerConfig.CheckCommand.IsDefined() {
+		return response, nil
 	}
+
+	outputDir, err := ioutil.TempDir("", "smuggler-run")
+	if err != nil {
+		return response, err
+	}
+	defer os.RemoveAll(outputDir)
+
+	params := copyMaps(request.Source.ExtraParams)
+	params["OUTPUT_DIR"] = outputDir
+
+	err = command.Run(smugglerConfig.CheckCommand, params)
+	if err != nil {
+		return response, err
+	}
+
+	if versionLines, err := readAndTrimAllLines(filepath.Join(outputDir, "versions")); err != nil {
+		return response, err
+	} else {
+		for _, l := range versionLines {
+			response = append(response, Version{VersionID: l})
+		}
+	}
+
 	return response, nil
 }
 
@@ -89,44 +93,54 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 	}
 
 	smugglerConfig := request.Source.SmugglerConfig
-	if smugglerConfig.InCommand.IsDefined() {
-		outputDir, err := ioutil.TempDir("", "smuggler-run")
-		if err != nil {
-			return response, err
-		}
-		defer os.RemoveAll(outputDir)
+	if !smugglerConfig.InCommand.IsDefined() {
+		return response, nil
+	}
+	outputDir, err := ioutil.TempDir("", "smuggler-run")
+	if err != nil {
+		return response, err
+	}
+	defer os.RemoveAll(outputDir)
 
-		params := make(map[string]string, len(request.Source.ExtraParams)+len(request.Params))
-		for k, v := range request.Source.ExtraParams {
-			params[k] = v
-		}
-		for k, v := range request.Params {
-			params[k] = v
-		}
+	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params["OUTPUT_DIR"] = outputDir
 
-		err = command.Run(smugglerConfig.InCommand, params, outputDir)
-		if err != nil {
-			return response, err
-		}
+	err = command.Run(smugglerConfig.InCommand, params)
+	if err != nil {
+		return response, err
+	}
 
-		// We always use the same version that we get in the request
-		response.Version = request.Version
+	// We always use the same version that we get in the request
+	response.Version = request.Version
 
-		if metadataLines, err := readAndTrimAllLines(filepath.Join(outputDir, "metadata")); err != nil {
-			return response, err
-		} else {
-			for _, l := range metadataLines {
-				s := strings.SplitN(l, "=", 2)
-				k, v := "", ""
-				k = strings.Trim(s[0], " \t")
-				if len(s) > 1 {
-					v = strings.Trim(s[1], " \t")
-				}
-				response.Metadata = append(response.Metadata, MetadataPair{Name: k, Value: v})
+	if metadataLines, err := readAndTrimAllLines(filepath.Join(outputDir, "metadata")); err != nil {
+		return response, err
+	} else {
+		for _, l := range metadataLines {
+			s := strings.SplitN(l, "=", 2)
+			k, v := "", ""
+			k = strings.Trim(s[0], " \t")
+			if len(s) > 1 {
+				v = strings.Trim(s[1], " \t")
 			}
+			response.Metadata = append(response.Metadata, MetadataPair{Name: k, Value: v})
 		}
 	}
 	return response, nil
+}
+
+func copyMaps(maps ...map[string]string) map[string]string {
+	total_len := 0
+	for _, m := range maps {
+		total_len += len(m)
+	}
+	result := make(map[string]string, total_len)
+	for _, m := range maps {
+		for k, v := range m {
+			result[k] = v
+		}
+	}
+	return result
 }
 
 func readAndTrimAllLines(filename string) ([]string, error) {
