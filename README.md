@@ -74,4 +74,6 @@ resources:
  * [ ] Document resource and add some examples
  * [ ] Clean up and simplify tests
  * [ ] Read config from `/opt/resource/config.yml`
+ * [ ] Stdout/Stderr is captured and printed immediatelly
+ * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
 

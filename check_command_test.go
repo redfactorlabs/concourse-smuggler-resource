@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("Check Command", func() {
-	It("executes a basic echo command", func() {
+	Context("when given a basic config from a structure", func() {
 		request := CheckRequest{
 			Source: Source{
 				Commands: []CommandDefinition{
@@ -22,89 +22,49 @@ var _ = Describe("Check Command", func() {
 			},
 		}
 
-		checkCommand := NewSmugglerCommand()
-		checkCommand.RunCheck(request)
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+		It("it executes the command and captures the output", func() {
+			command := NewSmugglerCommand()
+			command.RunCheck(request)
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+		})
 	})
 
-	It("executes a basic echo command from json", func() {
-		requestJson := `
-{
-  "source": {
-    "commands": [
-      {
-	"name": "check",
-	"path": "sh",
-	"args": [ "-e", "-c", "echo basic echo test" ]
-      }
-    ]
-  },
-  "version": {}
-}
-`
-		request, err := NewCheckRequestFromJson(requestJson)
-		Ω(err).ShouldNot(HaveOccurred())
-		checkCommand := NewSmugglerCommand()
-		checkCommand.RunCheck(request)
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+	Context("when given a basic config from a json", func() {
+		var command *SmugglerCommand
+		var response CheckResponse
+		requestJson := `{
+			"source": {
+				"commands": [
+					{
+			"name": "check",
+			"path": "sh",
+			"args": [ "-e", "-c", "echo basic echo test" ]
+					}
+				]
+			},
+			"version": {}
+		}`
+
+		BeforeEach(func() {
+			request, err := NewCheckRequestFromJson(requestJson)
+			Ω(err).ShouldNot(HaveOccurred())
+			command = NewSmugglerCommand()
+			response, err = command.RunCheck(request)
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+
+		It("it executes the command and captures the output", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+		})
 	})
 
-	It("executes a basic echo command from yaml manifest", func() {
+	Context("when given a config with a complex script from yaml", func() {
+		var request CheckRequest
+		var command *SmugglerCommand
+		var response CheckResponse
 		manifest := `
 resources:
-- name: simple_echo
-  type: smuggler
-  source:
-    commands:
-    - name: check
-      path: sh
-      args:
-      - -e
-      - -c
-      - |
-        echo basic echo test
-`
-		source, err := ResourceSourceFromYamlManifest(manifest, "simple_echo")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := CheckRequest{
-			Source: *source,
-		}
-		checkCommand := NewSmugglerCommand()
-		checkCommand.RunCheck(request)
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
-	})
-
-	It("it can run multiple commands passed in multiple lines", func() {
-		manifest := `
-resources:
-- name: multiline_command
-  type: smuggler
-  source:
-    commands:
-    - name: check
-      path: sh
-      args:
-      - -e
-      - -c
-      - |
-        echo line1
-        echo line2
-`
-		source, err := ResourceSourceFromYamlManifest(manifest, "multiline_command")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := CheckRequest{
-			Source: *source,
-		}
-		checkCommand := NewSmugglerCommand()
-		checkCommand.RunCheck(request)
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("line1"))
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("line2"))
-	})
-
-	It("it can passes the resource params as environment variables", func() {
-		manifest := `
-resources:
-- name: pass_params
+- name: complex_command
   type: smuggler
   source:
     extra_params:
@@ -113,54 +73,43 @@ resources:
       param3: 123
     commands:
     - name: check
-      path: sh
-      args:
-      - -e
-      - -c
-      - |
-        echo "param1=${SMUGGLER_param1}"
-        echo "param2=${SMUGGLER_param2}"
-        echo "param3=${SMUGGLER_param3}"
-`
-		source, err := ResourceSourceFromYamlManifest(manifest, "pass_params")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := CheckRequest{
-			Source: *source,
-		}
-		checkCommand := NewSmugglerCommand()
-		checkCommand.RunCheck(request)
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
-	})
-	It("it returns versions as list of strings", func() {
-		manifest := `
-resources:
-- name: output_versions
-  type: smuggler
-  source:
-    commands:
-    - name: check
       path: bash
       args:
       - -e
       - -c
       - |
+        echo Command Start
+        echo "param1=${SMUGGLER_param1}"
+        echo "param2=${SMUGGLER_param2}"
+        echo "param3=${SMUGGLER_param3}"
         echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
         echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/versions
         echo -e "\t 1.2.4  \n" >> ${SMUGGLER_OUTPUT_DIR}/versions
+        echo Command End
 `
-		source, err := ResourceSourceFromYamlManifest(manifest, "output_versions")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := CheckRequest{
-			Source: *source,
-		}
-		checkCommand := NewSmugglerCommand()
-		checkResponse, err := checkCommand.RunCheck(request)
-		Ω(err).ShouldNot(HaveOccurred())
 
-		vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
-
-		Ω(checkResponse).Should(BeEquivalentTo(vs))
+		BeforeEach(func() {
+			source, err := ResourceSourceFromYamlManifest(manifest, "complex_command")
+			Ω(err).ShouldNot(HaveOccurred())
+			request = CheckRequest{
+				Source: *source,
+			}
+			command = NewSmugglerCommand()
+			response, err = command.RunCheck(request)
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+		It("executes several lines of the script", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command Start"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
+		})
+		It("it can sets the resource extra_params as environment variables", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
+		})
+		It("it returns versions as list of strings", func() {
+			vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+			Ω(response).Should(BeEquivalentTo(vs))
+		})
 	})
 })
