@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 type SmugglerCommand struct {
@@ -22,6 +23,15 @@ func NewSmugglerCommand() *SmugglerCommand {
 
 func (command *SmugglerCommand) LastCommandCombinedOuput() string {
 	return command.lastCommandCombinedOuput
+}
+
+func (command *SmugglerCommand) LastCommandSuccess() bool {
+	return command.lastCommand.ProcessState.Success()
+}
+
+func (command *SmugglerCommand) LastCommandExitStatus() int {
+	waitStatus := command.lastCommand.ProcessState.Sys().(syscall.WaitStatus)
+	return waitStatus.ExitStatus()
 }
 
 func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]string) error {
@@ -39,13 +49,12 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 
 	command.lastCommand = exec.Command(path, args...)
 	command.lastCommand.Env = params_env
+
 	output, err := command.lastCommand.CombinedOutput()
-	if err != nil {
-		return err
-	}
 	command.lastCommandCombinedOuput = string(output)
 	log.Printf("[INFO] Output '%s'", command.LastCommandCombinedOuput())
-	return nil
+
+	return err
 }
 
 func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, error) {

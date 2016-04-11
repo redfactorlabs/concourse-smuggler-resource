@@ -22,10 +22,11 @@ var _ = Describe("Check Command", func() {
 			},
 		}
 
-		It("it executes the command and captures the output", func() {
+		It("it executes the command successfully and captures the output", func() {
 			command := NewSmugglerCommand()
 			command.RunCheck(request)
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+			Ω(command.LastCommandSuccess()).Should(BeTrue())
 		})
 	})
 
@@ -53,8 +54,9 @@ var _ = Describe("Check Command", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
-		It("it executes the command and captures the output", func() {
+		It("it executes the command successfully and captures the output", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
+			Ω(command.LastCommandSuccess()).Should(BeTrue())
 		})
 	})
 
@@ -76,6 +78,7 @@ var _ = Describe("Check Command", func() {
 		It("executes several lines of the script", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command Start"))
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
+			Ω(command.LastCommandSuccess()).Should(BeTrue())
 		})
 		It("it can sets the resource extra_params as environment variables", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
@@ -85,6 +88,25 @@ var _ = Describe("Check Command", func() {
 		It("it returns versions as list of strings", func() {
 			vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
 			Ω(response).Should(BeEquivalentTo(vs))
+		})
+	})
+	Context("when given a command which fails", func() {
+		var request CheckRequest
+		var command *SmugglerCommand
+		var response CheckResponse
+
+		It("captures the exit code", func() {
+			source, err := ResourceSourceFromYamlManifest(manifest, "fail_command")
+			Ω(err).ShouldNot(HaveOccurred())
+			request = CheckRequest{
+				Source: *source,
+			}
+			command = NewSmugglerCommand()
+			response, err = command.RunCheck(request)
+			Ω(err).Should(HaveOccurred())
+
+			Ω(command.LastCommandSuccess()).Should(BeFalse())
+			Ω(command.LastCommandExitStatus()).Should(Equal(2))
 		})
 	})
 })
@@ -111,6 +133,7 @@ var _ = Describe("In Command", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 		It("executes several lines of the script", func() {
+			Ω(command.LastCommandSuccess()).Should(BeTrue())
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command Start"))
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
 		})
@@ -162,6 +185,7 @@ var _ = Describe("Out Command", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 		It("executes several lines of the script", func() {
+			Ω(command.LastCommandSuccess()).Should(BeTrue())
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command Start"))
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
 		})
@@ -256,4 +280,16 @@ resources:
         echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
         echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
         echo Command End
+
+- name: fail_command
+  type: smuggler
+  source:
+    commands:
+    - name: check
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        exit 2
 `
