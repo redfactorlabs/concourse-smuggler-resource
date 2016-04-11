@@ -19,7 +19,6 @@ func main() {
 	}
 
 	outputResponse(response)
-
 }
 
 func inputRequest(request *smuggler.CheckRequest) {
