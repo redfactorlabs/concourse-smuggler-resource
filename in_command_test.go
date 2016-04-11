@@ -9,100 +9,10 @@ import (
 )
 
 var _ = Describe("In Command", func() {
-	It("it gets the destination dir", func() {
+	Context("when given a config with a complex script from yaml", func() {
 		manifest := `
 resources:
-- name: output_dir
-  type: smuggler
-  source:
-    commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo "destinationDir=$SMUGGLER_DESTINATION_DIR"
-`
-		source, err := ResourceSourceFromYamlManifest(manifest, "output_dir")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := InRequest{
-			Source:  *source,
-			Version: Version{VersionID: "1.2.3"},
-		}
-		command := NewSmugglerCommand()
-		_, err = command.RunIn("/tmp/destination/dir", request)
-		Ω(err).ShouldNot(HaveOccurred())
-
-		Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("destinationDir=/tmp/destination/dir"))
-	})
-
-	It("it gets the version ID", func() {
-		manifest := `
-resources:
-- name: output_versions
-  type: smuggler
-  source:
-    commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo "version=$SMUGGLER_VERSION_ID"
-`
-		source, err := ResourceSourceFromYamlManifest(manifest, "output_versions")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := InRequest{
-			Source:  *source,
-			Version: Version{VersionID: "1.2.3"},
-		}
-		checkCommand := NewSmugglerCommand()
-		_, err = checkCommand.RunIn("", request)
-		Ω(err).ShouldNot(HaveOccurred())
-
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("version=1.2.3"))
-	})
-
-	It("it returns metadata as list of strings", func() {
-		manifest := `
-resources:
-- name: output_versions
-  type: smuggler
-  source:
-    commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
-`
-		source, err := ResourceSourceFromYamlManifest(manifest, "output_versions")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := InRequest{
-			Source:  *source,
-			Version: Version{VersionID: "1.2.3"},
-		}
-		checkCommand := NewSmugglerCommand()
-		checkResponse, err := checkCommand.RunIn("", request)
-		Ω(err).ShouldNot(HaveOccurred())
-
-		vs := []MetadataPair{
-			MetadataPair{Name: "value1", Value: "something quite long"},
-			MetadataPair{Name: "value_2", Value: "2"},
-		}
-
-		Ω(checkResponse.Metadata).Should(BeEquivalentTo(vs))
-	})
-	It("passes the resource params as environment variables", func() {
-		manifest := `
-resources:
-- name: pass_params
+- name: complex_command
   type: smuggler
   source:
     extra_params:
@@ -111,33 +21,70 @@ resources:
       param3: 123
     commands:
     - name: in
-      path: sh
+      path: bash
       args:
       - -e
       - -c
       - |
+        echo Command Start
+        echo "version=$SMUGGLER_VERSION_ID"
+        echo "destinationDir=$SMUGGLER_DESTINATION_DIR"
         echo "param1=${SMUGGLER_param1}"
         echo "param2=${SMUGGLER_param2}"
         echo "param3=${SMUGGLER_param3}"
         echo "param4=${SMUGGLER_param4}"
         echo "param5=${SMUGGLER_param5}"
+        echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
+        echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
+        echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
+        echo Command End
 `
-		source, err := ResourceSourceFromYamlManifest(manifest, "pass_params")
-		Ω(err).ShouldNot(HaveOccurred())
-		request := InRequest{
-			Source:  *source,
-			Version: Version{VersionID: "1.2.3"},
-			Params: map[string]string{
-				"param4": "val4",
-				"param5": "something with spaces",
-			},
-		}
-		checkCommand := NewSmugglerCommand()
-		checkCommand.RunIn("", request)
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param4=val4"))
-		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param5=something with spaces"))
+		var request InRequest
+		var command *SmugglerCommand
+		var response InResponse
+
+		BeforeEach(func() {
+			source, err := ResourceSourceFromYamlManifest(manifest, "complex_command")
+			Ω(err).ShouldNot(HaveOccurred())
+			request = InRequest{
+				Source:  *source,
+				Version: Version{VersionID: "1.2.3"},
+				Params: map[string]string{
+					"param4": "val4",
+					"param5": "something with spaces",
+				},
+			}
+			command = NewSmugglerCommand()
+			response, err = command.RunIn("/tmp/destination/dir", request)
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+		It("executes several lines of the script", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command Start"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
+		})
+
+		It("it sets the resource extra_params and 'get' params as environment variables", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param4=val4"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param5=something with spaces"))
+		})
+
+		It("it gets the destination dir", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("destinationDir=/tmp/destination/dir"))
+		})
+
+		It("it gets the version ID", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("version=1.2.3"))
+		})
+
+		It("it returns metadata as list of strings", func() {
+			vs := []MetadataPair{
+				MetadataPair{Name: "value1", Value: "something quite long"},
+				MetadataPair{Name: "value_2", Value: "2"},
+			}
+			Ω(response.Metadata).Should(BeEquivalentTo(vs))
+		})
 	})
 })
