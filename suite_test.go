@@ -1,6 +1,7 @@
 package smuggler_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -16,8 +17,12 @@ var checkPath string
 var _ = BeforeSuite(func() {
 	var err error
 
-	checkPath, err = gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/check")
-	Ω(err).ShouldNot(HaveOccurred())
+	commands := []string{"check", "in", "out"}
+
+	for _, c := range commands {
+		checkPath, err = gexec.Build(fmt.Sprintf("github.com/redfactorlabs/concourse-smuggler-resource/cmd/%s", c))
+		Ω(err).ShouldNot(HaveOccurred())
+	}
 })
 
 var _ = AfterSuite(func() {
