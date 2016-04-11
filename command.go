@@ -82,7 +82,7 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 	return response, nil
 }
 
-func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
+func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) (InResponse, error) {
 	var response = InResponse{}
 
 	if ok, message := request.Source.IsValid(); !ok {
@@ -101,6 +101,7 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 	defer os.RemoveAll(outputDir)
 
 	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params["DESTINATION_DIR"] = destinationDir
 	params["VERSION_ID"] = request.Version.VersionID
 	params["OUTPUT_DIR"] = outputDir
 
@@ -119,7 +120,7 @@ func (command *SmugglerCommand) RunIn(request InRequest) (InResponse, error) {
 	return response, nil
 }
 
-func (command *SmugglerCommand) RunOut(request OutRequest) (OutResponse, error) {
+func (command *SmugglerCommand) RunOut(sourcesDir string, request OutRequest) (OutResponse, error) {
 	var response = OutResponse{}
 
 	if ok, message := request.Source.IsValid(); !ok {
@@ -137,6 +138,7 @@ func (command *SmugglerCommand) RunOut(request OutRequest) (OutResponse, error) 
 	defer os.RemoveAll(outputDir)
 
 	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params["SOURCES_DIR"] = sourcesDir
 	params["OUTPUT_DIR"] = outputDir
 
 	err = command.Run(smugglerConfig.OutCommand, params)

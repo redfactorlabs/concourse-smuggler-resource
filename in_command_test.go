@@ -9,6 +9,34 @@ import (
 )
 
 var _ = Describe("In Command", func() {
+	It("it gets the destination dir", func() {
+		manifest := `
+resources:
+- name: output_dir
+  type: smuggler
+  source:
+    smuggler_config:
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo "destinationDir=$SMUGGLER_DESTINATION_DIR"
+`
+		source, err := ResourceSourceFromYamlManifest(manifest, "output_dir")
+		Ω(err).ShouldNot(HaveOccurred())
+		request := InRequest{
+			Source:  *source,
+			Version: Version{VersionID: "1.2.3"},
+		}
+		command := NewSmugglerCommand()
+		_, err = command.RunIn("/tmp/destination/dir", request)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("destinationDir=/tmp/destination/dir"))
+	})
+
 	It("it gets the version ID", func() {
 		manifest := `
 resources:
@@ -31,7 +59,7 @@ resources:
 			Version: Version{VersionID: "1.2.3"},
 		}
 		checkCommand := NewSmugglerCommand()
-		_, err = checkCommand.RunIn(request)
+		_, err = checkCommand.RunIn("", request)
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("version=1.2.3"))
@@ -61,7 +89,7 @@ resources:
 			Version: Version{VersionID: "1.2.3"},
 		}
 		checkCommand := NewSmugglerCommand()
-		checkResponse, err := checkCommand.RunIn(request)
+		checkResponse, err := checkCommand.RunIn("", request)
 		Ω(err).ShouldNot(HaveOccurred())
 
 		vs := []MetadataPair{
@@ -105,7 +133,7 @@ resources:
 			},
 		}
 		checkCommand := NewSmugglerCommand()
-		checkCommand.RunIn(request)
+		checkCommand.RunIn("", request)
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))

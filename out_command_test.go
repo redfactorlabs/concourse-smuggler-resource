@@ -9,6 +9,34 @@ import (
 )
 
 var _ = Describe("Out Command", func() {
+	It("it gets the sources dir", func() {
+		manifest := `
+resources:
+- name: output_dir
+  type: smuggler
+  source:
+    smuggler_config:
+      out:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo "sourcesDir=$SMUGGLER_SOURCES_DIR"
+          echo "1.2.3" > $SMUGGLER_OUTPUT_DIR/version
+`
+		source, err := ResourceSourceFromYamlManifest(manifest, "output_dir")
+		Ω(err).ShouldNot(HaveOccurred())
+		request := OutRequest{
+			Source: *source,
+		}
+		command := NewSmugglerCommand()
+		_, err = command.RunOut("/tmp/sources/dir", request)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("sourcesDir=/tmp/sources/dir"))
+	})
+
 	It("it fails if it cannot find the version ID", func() {
 		manifest := `
 resources:
@@ -30,7 +58,7 @@ resources:
 			Source: *source,
 		}
 		command := NewSmugglerCommand()
-		_, err = command.RunOut(request)
+		_, err = command.RunOut("", request)
 		Ω(err).Should(HaveOccurred())
 	})
 	It("it exports the version ID", func() {
@@ -56,7 +84,7 @@ resources:
 			Source: *source,
 		}
 		command := NewSmugglerCommand()
-		outResponse, err := command.RunOut(request)
+		outResponse, err := command.RunOut("", request)
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Ω(outResponse.Version).Should(BeEquivalentTo(Version{VersionID: "1.2.3"}))
@@ -95,7 +123,7 @@ resources:
 			},
 		}
 		checkCommand := NewSmugglerCommand()
-		checkCommand.RunOut(request)
+		checkCommand.RunOut("", request)
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
 		Ω(checkCommand.LastCommandCombinedOuput()).Should(ContainSubstring("param3=123"))
