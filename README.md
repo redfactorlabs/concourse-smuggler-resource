@@ -67,5 +67,11 @@ resources:
 
 # TODO
 
- * [ ] basic check/in/out which runs a script command
+ * [X] Basic check/in/out which runs a script command
+ * [ ] Add integration tests of the final commands
+ * [ ] Add travis testing and Makefile and other scaffolding
+ * [ ] Add example Dockerfile with autobuild
+ * [ ] Document resource and add some examples
+ * [ ] Clean up and simplify tests
+ * [ ] Read config from `/opt/resource/config.yml`
 
