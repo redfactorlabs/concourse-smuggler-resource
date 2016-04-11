@@ -55,8 +55,8 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 		return response, errors.New(message)
 	}
 
-	smugglerConfig := request.Source.SmugglerConfig
-	if !smugglerConfig.CheckCommand.IsDefined() {
+	commandDefinition := request.Source.FindCommand("check")
+	if !commandDefinition.IsDefined() {
 		return response, nil
 	}
 
@@ -69,7 +69,7 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 	params := copyMaps(request.Source.ExtraParams)
 	params["OUTPUT_DIR"] = outputDir
 
-	err = command.Run(smugglerConfig.CheckCommand, params)
+	err = command.Run(*commandDefinition, params)
 	if err != nil {
 		return response, err
 	}
@@ -89,8 +89,8 @@ func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) 
 		return response, errors.New(message)
 	}
 
-	smugglerConfig := request.Source.SmugglerConfig
-	if !smugglerConfig.InCommand.IsDefined() {
+	commandDefinition := request.Source.FindCommand("in")
+	if !commandDefinition.IsDefined() {
 		return response, nil
 	}
 
@@ -105,7 +105,7 @@ func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) 
 	params["VERSION_ID"] = request.Version.VersionID
 	params["OUTPUT_DIR"] = outputDir
 
-	err = command.Run(smugglerConfig.InCommand, params)
+	err = command.Run(*commandDefinition, params)
 	if err != nil {
 		return response, err
 	}
@@ -127,10 +127,11 @@ func (command *SmugglerCommand) RunOut(sourcesDir string, request OutRequest) (O
 		return response, errors.New(message)
 	}
 
-	smugglerConfig := request.Source.SmugglerConfig
-	if !smugglerConfig.OutCommand.IsDefined() {
+	commandDefinition := request.Source.FindCommand("out")
+	if !commandDefinition.IsDefined() {
 		return response, nil
 	}
+
 	outputDir, err := ioutil.TempDir("", "smuggler-run")
 	if err != nil {
 		return response, err
@@ -141,7 +142,7 @@ func (command *SmugglerCommand) RunOut(sourcesDir string, request OutRequest) (O
 	params["SOURCES_DIR"] = sourcesDir
 	params["OUTPUT_DIR"] = outputDir
 
-	err = command.Run(smugglerConfig.OutCommand, params)
+	err = command.Run(*commandDefinition, params)
 	if err != nil {
 		return response, err
 	}

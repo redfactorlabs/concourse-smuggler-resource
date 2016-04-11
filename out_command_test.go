@@ -15,15 +15,15 @@ resources:
 - name: output_dir
   type: smuggler
   source:
-    smuggler_config:
-      out:
-        path: bash
-        args:
-        - -e
-        - -c
-        - |
-          echo "sourcesDir=$SMUGGLER_SOURCES_DIR"
-          echo "1.2.3" > $SMUGGLER_OUTPUT_DIR/version
+    commands:
+    - name: out
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        echo "sourcesDir=$SMUGGLER_SOURCES_DIR"
+        echo "1.2.3" > $SMUGGLER_OUTPUT_DIR/version
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "output_dir")
 		Ω(err).ShouldNot(HaveOccurred())
@@ -43,14 +43,14 @@ resources:
 - name: out_command
   type: smuggler
   source:
-    smuggler_config:
-      out:
-        path: bash
-        args:
-        - -e
-        - -c
-        - |
-          true
+    commands:
+    - name: out
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        true
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "out_command")
 		Ω(err).ShouldNot(HaveOccurred())
@@ -67,16 +67,16 @@ resources:
 - name: out_command
   type: smuggler
   source:
-    smuggler_config:
-      out:
-        path: bash
-        args:
-        - -e
-        - -c
-        - |
-          echo "1.2.3" > $SMUGGLER_OUTPUT_DIR/version
-          echo -e "\t 1.2.3   " >> $SMUGGLER_OUTPUT_DIR/version
-          echo -e "\t 1.2.4   " >> $SMUGGLER_OUTPUT_DIR/version
+    commands:
+    - name: out
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        echo "1.2.3" > $SMUGGLER_OUTPUT_DIR/version
+        echo -e "\t 1.2.3   " >> $SMUGGLER_OUTPUT_DIR/version
+        echo -e "\t 1.2.4   " >> $SMUGGLER_OUTPUT_DIR/version
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "out_command")
 		Ω(err).ShouldNot(HaveOccurred())
@@ -99,19 +99,19 @@ resources:
       param1: test
       param2: true
       param3: 123
-    smuggler_config:
-      out:
-        path: sh
-        args:
-        - -e
-        - -c
-        - |
-          echo "param1=${SMUGGLER_param1}"
-          echo "param2=${SMUGGLER_param2}"
-          echo "param3=${SMUGGLER_param3}"
-          echo "param4=${SMUGGLER_param4}"
-          echo "param5=${SMUGGLER_param5}"
-          echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/version
+    commands:
+    - name: out
+      path: sh
+      args:
+      - -e
+      - -c
+      - |
+        echo "param1=${SMUGGLER_param1}"
+        echo "param2=${SMUGGLER_param2}"
+        echo "param3=${SMUGGLER_param3}"
+        echo "param4=${SMUGGLER_param4}"
+        echo "param5=${SMUGGLER_param5}"
+        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/version
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "pass_params")
 		Ω(err).ShouldNot(HaveOccurred())

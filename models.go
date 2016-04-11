@@ -6,27 +6,31 @@ import (
 )
 
 type Source struct {
-	SmugglerConfig SmugglerConfig    `json:"smuggler_config,omitempty"`
-	ExtraParams    map[string]string `json:"extra_params,omitempty"`
-}
-
-type SmugglerConfig struct {
-	CheckCommand CommandDefinition `json:"check,omitempty"`
-	InCommand    CommandDefinition `json:"in,omitempty"`
-	OutCommand   CommandDefinition `json:"out,omitempty"`
+	Commands    []CommandDefinition `json:"commands,omitempty"`
+	ExtraParams map[string]string   `json:"extra_params,omitempty"`
 }
 
 func (source Source) IsValid() (bool, string) {
 	return true, ""
 }
 
+func (source Source) FindCommand(name string) *CommandDefinition {
+	for _, command := range source.Commands {
+		if command.Name == name {
+			return &command
+		}
+	}
+	return nil
+}
+
 type CommandDefinition struct {
+	Name string   `json:"name"`
 	Path string   `json:"path"`
 	Args []string `json:"args,omitempty"`
 }
 
 func (commandDefinition CommandDefinition) IsDefined() bool {
-	return (commandDefinition.Path != "")
+	return (commandDefinition.Name != "")
 }
 
 type Version struct {

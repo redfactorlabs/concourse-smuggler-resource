@@ -12,8 +12,9 @@ var _ = Describe("Check Command", func() {
 	It("executes a basic echo command", func() {
 		request := CheckRequest{
 			Source: Source{
-				SmugglerConfig: SmugglerConfig{
-					CheckCommand: CommandDefinition{
+				Commands: []CommandDefinition{
+					CommandDefinition{
+						Name: "check",
 						Path: "bash",
 						Args: []string{"-e", "-c", "echo basic echo test"},
 					},
@@ -30,12 +31,13 @@ var _ = Describe("Check Command", func() {
 		requestJson := `
 {
   "source": {
-    "smuggler_config": {
-      "check": {
+    "commands": [
+      {
+	"name": "check",
 	"path": "sh",
 	"args": [ "-e", "-c", "echo basic echo test" ]
       }
-    }
+    ]
   },
   "version": {}
 }
@@ -53,14 +55,14 @@ resources:
 - name: simple_echo
   type: smuggler
   source:
-    smuggler_config:
-      check:
-        path: sh
-        args:
-        - -e
-        - -c
-        - |
-          echo basic echo test
+    commands:
+    - name: check
+      path: sh
+      args:
+      - -e
+      - -c
+      - |
+        echo basic echo test
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "simple_echo")
 		Ω(err).ShouldNot(HaveOccurred())
@@ -78,15 +80,15 @@ resources:
 - name: multiline_command
   type: smuggler
   source:
-    smuggler_config:
-      check:
-        path: sh
-        args:
-        - -e
-        - -c
-        - |
-          echo line1
-          echo line2
+    commands:
+    - name: check
+      path: sh
+      args:
+      - -e
+      - -c
+      - |
+        echo line1
+        echo line2
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "multiline_command")
 		Ω(err).ShouldNot(HaveOccurred())
@@ -109,16 +111,16 @@ resources:
       param1: test
       param2: true
       param3: 123
-    smuggler_config:
-      check:
-        path: sh
-        args:
-        - -e
-        - -c
-        - |
-          echo "param1=${SMUGGLER_param1}"
-          echo "param2=${SMUGGLER_param2}"
-          echo "param3=${SMUGGLER_param3}"
+    commands:
+    - name: check
+      path: sh
+      args:
+      - -e
+      - -c
+      - |
+        echo "param1=${SMUGGLER_param1}"
+        echo "param2=${SMUGGLER_param2}"
+        echo "param3=${SMUGGLER_param3}"
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "pass_params")
 		Ω(err).ShouldNot(HaveOccurred())
@@ -137,16 +139,16 @@ resources:
 - name: output_versions
   type: smuggler
   source:
-    smuggler_config:
-      check:
-        path: bash
-        args:
-        - -e
-        - -c
-        - |
-          echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
-          echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/versions
-          echo -e "\t 1.2.4  \n" >> ${SMUGGLER_OUTPUT_DIR}/versions
+    commands:
+    - name: check
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+        echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/versions
+        echo -e "\t 1.2.4  \n" >> ${SMUGGLER_OUTPUT_DIR}/versions
 `
 		source, err := ResourceSourceFromYamlManifest(manifest, "output_versions")
 		Ω(err).ShouldNot(HaveOccurred())

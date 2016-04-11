@@ -49,19 +49,20 @@ resources:
 - name: atomy-pr
   type: pull-request
   source:
-    smuggler_config:
-      backend: s3
-      backend_config:
+    backend:
+    - name: s3
+      config:
         bucket_name: my-ssh-key-store
         versioned_file: id_rsa.tar.gz
-      out:
-        path: sh
-        args:
-        - -e
-        - -c
-        - |
-          ssh-keygen -f id_rsa -N ''
-          tar -cvzf ./backend/s3/id_rsa.tar.gz id_rsa id_rsa.tgz
+    commands:
+    - name: out
+      path: sh
+      args:
+      - -e
+      - -c
+      - |
+        ssh-keygen -f id_rsa -N ''
+        tar -cvzf ./backend/s3/id_rsa.tar.gz id_rsa id_rsa.tgz
 ```
 
 # TODO
