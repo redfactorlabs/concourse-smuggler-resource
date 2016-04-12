@@ -1,4 +1,4 @@
-package helpers
+package test
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	. "github.com/redfactorlabs/concourse-smuggler-resource"
+	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
 type ResourceDefinition struct {

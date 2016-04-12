@@ -1,4 +1,4 @@
-package smuggler
+package utils
 
 import (
 	"fmt"
