@@ -7,9 +7,9 @@ import (
 	"github.com/mitchellh/colorstring"
 )
 
-func Fatal(doing string, err error) {
+func Fatal(doing string, err error, exitCode int) {
 	Sayf(colorstring.Color("[red]error %s: %s\n"), doing, err)
-	os.Exit(1)
+	os.Exit(exitCode)
 }
 
 func Sayf(message string, args ...interface{}) {
