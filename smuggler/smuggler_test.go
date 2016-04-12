@@ -106,6 +106,10 @@ var _ = Describe("Check Command", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
 			Ω(command.LastCommandSuccess()).Should(BeTrue())
 		})
+		It("it sets the $MUGGLER_ACTION and $SMUGGLE_COMMAND variables", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("action=check"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("command=check"))
+		})
 		It("it can sets the resource extra_params as environment variables", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
@@ -163,7 +167,10 @@ var _ = Describe("In Command", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command Start"))
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
 		})
-
+		It("it sets the $MUGGLER_ACTION and $SMUGGLE_COMMAND variables", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("action=in"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("command=in"))
+		})
 		It("it sets the resource extra_params and 'get' params as environment variables", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))
@@ -245,6 +252,10 @@ var _ = Describe("Out Command", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("Command End"))
 		})
 
+		It("it sets the $MUGGLER_ACTION and $SMUGGLE_COMMAND variables", func() {
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("action=out"))
+			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("command=out"))
+		})
 		It("it sets the resource extra_params and 'put' params as environment variables", func() {
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param1=test"))
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("param2=true"))

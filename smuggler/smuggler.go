@@ -86,6 +86,8 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 	defer os.RemoveAll(outputDir)
 
 	params := copyMaps(request.Source.ExtraParams)
+	params["ACTION"] = "check"
+	params["COMMAND"] = "check"
 	params["OUTPUT_DIR"] = outputDir
 
 	err = command.Run(*commandDefinition, params)
@@ -124,6 +126,8 @@ func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) 
 	defer os.RemoveAll(outputDir)
 
 	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params["ACTION"] = "in"
+	params["COMMAND"] = "in"
 	params["DESTINATION_DIR"] = destinationDir
 	params["VERSION_ID"] = request.Version.VersionID
 	params["OUTPUT_DIR"] = outputDir
@@ -164,6 +168,8 @@ func (command *SmugglerCommand) RunOut(sourcesDir string, request OutRequest) (O
 	defer os.RemoveAll(outputDir)
 
 	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params["ACTION"] = "out"
+	params["COMMAND"] = "out"
 	params["SOURCES_DIR"] = sourcesDir
 	params["OUTPUT_DIR"] = outputDir
 
