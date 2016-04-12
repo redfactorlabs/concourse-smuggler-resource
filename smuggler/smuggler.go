@@ -46,7 +46,7 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 	path := commandDefinition.Path
 	args := commandDefinition.Args
 
-	params_env := make([]string, len(params)+1)
+	params_env := make([]string, 0, len(params))
 	for k, v := range params {
 		params_env = append(params_env, fmt.Sprintf("SMUGGLER_%s=%s", k, v))
 	}
