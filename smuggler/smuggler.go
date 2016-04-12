@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	. "github.com/redfactorlabs/concourse-smuggler-resource"
 )
 
 type SmugglerCommand struct {

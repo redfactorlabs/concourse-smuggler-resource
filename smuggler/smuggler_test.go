@@ -6,6 +6,7 @@ import (
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource"
 	. "github.com/redfactorlabs/concourse-smuggler-resource/helpers/test"
+	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
 var manifest = Fixture("pipeline.yml")
