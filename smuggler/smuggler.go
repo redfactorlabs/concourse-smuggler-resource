@@ -15,10 +15,11 @@ import (
 type SmugglerCommand struct {
 	lastCommand              *exec.Cmd
 	lastCommandCombinedOuput string
+	logger                   *log.Logger
 }
 
-func NewSmugglerCommand() *SmugglerCommand {
-	return &SmugglerCommand{}
+func NewSmugglerCommand(logger *log.Logger) *SmugglerCommand {
+	return &SmugglerCommand{logger: logger}
 }
 
 func (command *SmugglerCommand) LastCommand() *exec.Cmd {
@@ -51,20 +52,22 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 	}
 	params_env = append(params_env, os.Environ()...)
 
-	log.Printf("[INFO] Running '%s %s' with env:\n\t",
-		path, strings.Join(args, " "), strings.Join(params_env, "\n\t"))
+	command.logger.Printf("[INFO] Running command:\n\tPath: '%s'\n\tArgs: '%s'\n\tEnv:\n\t'%s",
+		path, strings.Join(args, "' '"), strings.Join(params_env, "',\n\t'"))
 
 	command.lastCommand = exec.Command(path, args...)
 	command.lastCommand.Env = params_env
 
 	output, err := command.lastCommand.CombinedOutput()
 	command.lastCommandCombinedOuput = string(output)
-	log.Printf("[INFO] Output '%s'", command.LastCommandCombinedOuput())
+	command.logger.Printf("[INFO] Output '%s'", command.LastCommandCombinedOuput())
 
 	return err
 }
 
 func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, error) {
+	command.logger.Printf("[INFO] Running check action")
+
 	var response = CheckResponse{}
 
 	if ok, message := request.Source.IsValid(); !ok {
@@ -99,6 +102,8 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 }
 
 func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) (InResponse, error) {
+	command.logger.Printf("[INFO] Running in action")
+
 	var response = InResponse{
 		Version: request.Version,
 	}
@@ -139,6 +144,8 @@ func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) 
 }
 
 func (command *SmugglerCommand) RunOut(sourcesDir string, request OutRequest) (OutResponse, error) {
+	command.logger.Printf("[INFO] Running out action")
+
 	var response = OutResponse{}
 
 	if ok, message := request.Source.IsValid(); !ok {

@@ -3,6 +3,9 @@ package cmd_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
 
 	. "github.com/onsi/ginkgo"
@@ -22,16 +25,30 @@ var _ = Describe("check", func() {
 		command *exec.Cmd
 		stdin   *bytes.Buffer
 		session *gexec.Session
+		logFile *os.File
 
 		expectedExitStatus int
 	)
 
 	BeforeEach(func() {
+		var err error
 		stdin = &bytes.Buffer{}
 		expectedExitStatus = 0
 
 		command = exec.Command(checkPath)
 		command.Stdin = stdin
+
+		// Point log file to a temporary location
+		logFile, err = ioutil.TempFile("", "smuggler.log")
+		Ω(err).ShouldNot(HaveOccurred())
+		command.Env = append(os.Environ(), fmt.Sprintf("SMUGGLER_LOG=%s", logFile.Name()))
+	})
+
+	AfterEach(func() {
+		stat, err := logFile.Stat()
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(stat.Size()).Should(BeNumerically(">", 0))
+		os.Remove(logFile.Name())
 	})
 
 	JustBeforeEach(func() {
