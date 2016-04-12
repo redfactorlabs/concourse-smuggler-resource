@@ -24,6 +24,7 @@ func main() {
 	if err != nil {
 		utils.Fatal("running command", err, command.LastCommandExitStatus())
 	}
+	os.Stderr.Write([]byte(command.LastCommandCombinedOuput()))
 
 	outputResponse(response)
 }

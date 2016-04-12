@@ -81,6 +81,16 @@ var _ = Describe("check", func() {
 			vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
 			Ω(response).Should(BeEquivalentTo(vs))
 		})
+
+		It("outputs the commands output", func() {
+			stderr := session.Err.Contents()
+
+			Ω(stderr).Should(ContainSubstring("Command Start"))
+			Ω(stderr).Should(ContainSubstring("Command End"))
+			Ω(stderr).Should(ContainSubstring("param1=test"))
+			Ω(stderr).Should(ContainSubstring("param2=true"))
+			Ω(stderr).Should(ContainSubstring("param3=123"))
+		})
 	})
 
 	Context("when given a dummy command", func() {
