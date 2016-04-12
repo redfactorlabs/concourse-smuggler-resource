@@ -9,10 +9,16 @@ import (
 )
 
 func main() {
+	smugglerLogFileName := utils.GetEnvOrDefault("SMUGGLER_LOG", "/tmp/smuggler.log")
+	tempFileLogger, err := utils.NewTempFileLogger(smugglerLogFileName)
+	if err != nil {
+		utils.Fatal("opening log '/tmp/smuggler.log'", err, 1)
+	}
+
 	var request smuggler.CheckRequest
 	inputRequest(&request)
 
-	command := smuggler.NewSmugglerCommand()
+	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
 
 	response, err := command.RunCheck(request)
 	if err != nil {

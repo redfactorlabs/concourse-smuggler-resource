@@ -3,12 +3,14 @@ package smuggler_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"log"
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource/helpers/test"
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
 var manifest = Fixture("pipeline.yml")
+var logger = log.New(GinkgoWriter, "smuggler: ", log.Lmicroseconds)
 
 var _ = Describe("Check Command", func() {
 	Context("when given a basic config from a structure", func() {
@@ -25,7 +27,7 @@ var _ = Describe("Check Command", func() {
 		}
 
 		It("it executes the command successfully and captures the output", func() {
-			command := NewSmugglerCommand()
+			command := NewSmugglerCommand(logger)
 			command.RunCheck(request)
 			Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("basic echo test"))
 			Ω(command.LastCommandSuccess()).Should(BeTrue())
@@ -51,7 +53,7 @@ var _ = Describe("Check Command", func() {
 		BeforeEach(func() {
 			request, err := NewCheckRequestFromJson(requestJson)
 			Ω(err).ShouldNot(HaveOccurred())
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunCheck(request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -73,7 +75,7 @@ var _ = Describe("Check Command", func() {
 			request = CheckRequest{
 				Source: *source,
 			}
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunCheck(request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -95,7 +97,7 @@ var _ = Describe("Check Command", func() {
 			request = CheckRequest{
 				Source: *source,
 			}
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunCheck(request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -125,7 +127,7 @@ var _ = Describe("Check Command", func() {
 			request = CheckRequest{
 				Source: *source,
 			}
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunCheck(request)
 			Ω(err).Should(HaveOccurred())
 
@@ -152,7 +154,7 @@ var _ = Describe("In Command", func() {
 					"param5": "something with spaces",
 				},
 			}
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunIn("/tmp/destination/dir", request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -199,7 +201,7 @@ var _ = Describe("In Command", func() {
 				Source:  *source,
 				Version: Version{VersionID: "1.2.3"},
 			}
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunIn("/tmp/destination/dir", request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -233,7 +235,7 @@ var _ = Describe("Out Command", func() {
 					"param5": "something with spaces",
 				},
 			}
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunOut("/tmp/sources/dir", request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -279,7 +281,7 @@ var _ = Describe("Out Command", func() {
 			request = OutRequest{
 				Source: *source,
 			}
-			command = NewSmugglerCommand()
+			command = NewSmugglerCommand(logger)
 			response, err = command.RunOut("/tmp/sources/dir", request)
 			Ω(err).Should(HaveOccurred())
 		})
