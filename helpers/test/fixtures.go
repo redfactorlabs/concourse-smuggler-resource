@@ -3,6 +3,8 @@ package helpers
 import (
 	"fmt"
 	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"path/filepath"
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource"
 )
@@ -36,4 +38,14 @@ func ResourceSourceFromYamlManifest(yaml_manifest string, resource_name string) 
 	}
 
 	return &resource.Source, nil
+}
+
+func Fixture(filename string) string {
+	path := filepath.Join("fixtures", filename)
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(contents)
 }
