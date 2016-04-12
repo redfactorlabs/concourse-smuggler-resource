@@ -73,3 +73,6 @@ resources:
       - |
         exit 2
 
+- name: dummy_command
+  type: smuggler
+

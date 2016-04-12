@@ -21,11 +21,18 @@ func NewSmugglerCommand() *SmugglerCommand {
 	return &SmugglerCommand{}
 }
 
+func (command *SmugglerCommand) LastCommand() *exec.Cmd {
+	return command.lastCommand
+}
+
 func (command *SmugglerCommand) LastCommandCombinedOuput() string {
 	return command.lastCommandCombinedOuput
 }
 
 func (command *SmugglerCommand) LastCommandSuccess() bool {
+	if command.lastCommand == nil || command.lastCommand.ProcessState == nil {
+		return true
+	}
 	return command.lastCommand.ProcessState.Success()
 }
 
@@ -65,7 +72,7 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 	}
 
 	commandDefinition := request.Source.FindCommand("check")
-	if !commandDefinition.IsDefined() {
+	if commandDefinition == nil {
 		return response, nil
 	}
 
@@ -92,14 +99,16 @@ func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, e
 }
 
 func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) (InResponse, error) {
-	var response = InResponse{}
+	var response = InResponse{
+		Version: request.Version,
+	}
 
 	if ok, message := request.Source.IsValid(); !ok {
 		return response, errors.New(message)
 	}
 
 	commandDefinition := request.Source.FindCommand("in")
-	if !commandDefinition.IsDefined() {
+	if commandDefinition == nil {
 		return response, nil
 	}
 
@@ -137,8 +146,8 @@ func (command *SmugglerCommand) RunOut(sourcesDir string, request OutRequest) (O
 	}
 
 	commandDefinition := request.Source.FindCommand("out")
-	if !commandDefinition.IsDefined() {
-		return response, nil
+	if commandDefinition == nil {
+		return response, errors.New("No out command defined. You must define one to generate versions.")
 	}
 
 	outputDir, err := ioutil.TempDir("", "smuggler-run")

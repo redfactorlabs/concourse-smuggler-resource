@@ -62,6 +62,28 @@ var _ = Describe("Check Command", func() {
 		})
 	})
 
+	Context("when given a config with empty config from yaml", func() {
+		var request CheckRequest
+		var command *SmugglerCommand
+		var response CheckResponse
+
+		BeforeEach(func() {
+			source, err := ResourceSourceFromYamlManifest(manifest, "dummy_command")
+			Ω(err).ShouldNot(HaveOccurred())
+			request = CheckRequest{
+				Source: *source,
+			}
+			command = NewSmugglerCommand()
+			response, err = command.RunCheck(request)
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+		It("does not execute and returns an empty response", func() {
+			Ω(command.LastCommand()).Should(BeNil())
+			Ω(command.LastCommandCombinedOuput()).Should(BeEmpty())
+			Ω(command.LastCommandSuccess()).Should(BeTrue())
+			Ω(response).Should(BeEmpty())
+		})
+	})
 	Context("when given a config with a complex script from yaml", func() {
 		var request CheckRequest
 		var command *SmugglerCommand
@@ -164,6 +186,35 @@ var _ = Describe("In Command", func() {
 			Ω(response.Metadata).Should(BeEquivalentTo(vs))
 		})
 	})
+
+	Context("when given a dummy config with empty commands from yaml", func() {
+		var request InRequest
+		var command *SmugglerCommand
+		var response InResponse
+
+		BeforeEach(func() {
+			source, err := ResourceSourceFromYamlManifest(manifest, "dummy_command")
+			Ω(err).ShouldNot(HaveOccurred())
+			request = InRequest{
+				Source:  *source,
+				Version: Version{VersionID: "1.2.3"},
+			}
+			command = NewSmugglerCommand()
+			response, err = command.RunIn("/tmp/destination/dir", request)
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+		It("does not execute", func() {
+			Ω(command.LastCommand()).Should(BeNil())
+			Ω(command.LastCommandCombinedOuput()).Should(BeEmpty())
+			Ω(command.LastCommandSuccess()).Should(BeTrue())
+		})
+		It("does not execute and returns the same version", func() {
+			Ω(response.Version).Should(Equal(request.Version))
+		})
+		It("does not execute and returns empty metadata", func() {
+			Ω(response.Metadata).Should(BeEmpty())
+		})
+	})
 })
 
 var _ = Describe("Out Command", func() {
@@ -214,6 +265,29 @@ var _ = Describe("Out Command", func() {
 				MetadataPair{Name: "value_2", Value: "2"},
 			}
 			Ω(response.Metadata).Should(BeEquivalentTo(vs))
+		})
+	})
+
+	Context("when given a dummy config with empty commands from yaml", func() {
+		var request OutRequest
+		var command *SmugglerCommand
+		var response OutResponse
+
+		BeforeEach(func() {
+			source, err := ResourceSourceFromYamlManifest(manifest, "dummy_command")
+			Ω(err).ShouldNot(HaveOccurred())
+			request = OutRequest{
+				Source: *source,
+			}
+			command = NewSmugglerCommand()
+			response, err = command.RunOut("/tmp/sources/dir", request)
+			Ω(err).Should(HaveOccurred())
+		})
+		It("does not execute the command", func() {
+			Ω(command.LastCommand()).Should(BeNil())
+		})
+		It("does not execute and returns empty metadata", func() {
+			Ω(response.Metadata).Should(BeEmpty())
 		})
 	})
 })
