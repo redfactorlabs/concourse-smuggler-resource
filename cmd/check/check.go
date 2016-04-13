@@ -15,27 +15,27 @@ func main() {
 		utils.Fatal("opening log '/tmp/smuggler.log'", err, 1)
 	}
 
-	var request smuggler.CheckRequest
+	request := smuggler.ResourceRequest{Type: smuggler.CheckType}
 	inputRequest(&request)
 
 	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
 
-	response, err := command.RunCheck(request)
+	response, err := command.RunAction("", request)
 	if err != nil {
 		utils.Fatal("running command", err, command.LastCommandExitStatus())
 	}
 	os.Stderr.Write([]byte(command.LastCommandCombinedOuput()))
 
-	outputResponse(response)
+	outputResponse(response.Versions)
 }
 
-func inputRequest(request *smuggler.CheckRequest) {
+func inputRequest(request *smuggler.ResourceRequest) {
 	if err := json.NewDecoder(os.Stdin).Decode(request); err != nil {
 		utils.Fatal("reading request from stdin", err, 1)
 	}
 }
 
-func outputResponse(response smuggler.CheckResponse) {
+func outputResponse(response []smuggler.Version) {
 	if err := json.NewEncoder(os.Stdout).Encode(response); err != nil {
 		utils.Fatal("writing response to stdout", err, 1)
 	}

@@ -19,6 +19,7 @@ import (
 )
 
 var manifest = Fixture("pipeline.yml")
+var err error
 
 var _ = Describe("check", func() {
 	var (
@@ -61,21 +62,18 @@ var _ = Describe("check", func() {
 	})
 
 	Context("when given a complex command", func() {
-		var request CheckRequest
+		var request ResourceRequest
 
 		BeforeEach(func() {
-			source, err := ResourceSourceFromYamlManifest(manifest, "complex_command")
+			request, err = GetResourceRequestFromYamlManifest(CheckType, manifest, "complex_command", "a_job")
 			Ω(err).ShouldNot(HaveOccurred())
-			request = CheckRequest{
-				Source: *source,
-			}
 
 			err = json.NewEncoder(stdin).Encode(request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
 		It("outputs a valid json with a version", func() {
-			var response CheckResponse
+			var response []Version
 			err := json.Unmarshal(session.Out.Contents(), &response)
 			Ω(err).ShouldNot(HaveOccurred())
 			vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
@@ -94,21 +92,17 @@ var _ = Describe("check", func() {
 	})
 
 	Context("when given a dummy command", func() {
-		var request CheckRequest
+		var request ResourceRequest
 
 		BeforeEach(func() {
-			source, err := ResourceSourceFromYamlManifest(manifest, "dummy_command")
-			Ω(err).ShouldNot(HaveOccurred())
-			request = CheckRequest{
-				Source: *source,
-			}
+			request, err = GetResourceRequestFromYamlManifest(CheckType, manifest, "dummy_command", "a_job")
 
 			err = json.NewEncoder(stdin).Encode(request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
 		It("returns empty version list", func() {
-			var response CheckResponse
+			var response []Version
 			err := json.Unmarshal(session.Out.Contents(), &response)
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(response).Should(BeEmpty())
@@ -116,14 +110,10 @@ var _ = Describe("check", func() {
 	})
 
 	Context("when given a command which fails", func() {
-		var request CheckRequest
+		var request ResourceRequest
 
 		BeforeEach(func() {
-			source, err := ResourceSourceFromYamlManifest(manifest, "fail_command")
-			Ω(err).ShouldNot(HaveOccurred())
-			request = CheckRequest{
-				Source: *source,
-			}
+			request, err = GetResourceRequestFromYamlManifest(CheckType, manifest, "fail_command", "a_job")
 
 			expectedExitStatus = 2
 
