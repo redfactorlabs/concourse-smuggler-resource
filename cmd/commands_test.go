@@ -78,9 +78,7 @@ var _ = Describe("smuggler commands", func() {
 			BeforeEach(func() {
 				commandPath = checkPath
 
-				request, err = GetResourceRequestFromYamlManifest(CheckType, manifest, "complex_command", "a_job")
-				Ω(err).ShouldNot(HaveOccurred())
-
+				commandPath, request = prepareCommandCheck("complex_command")
 			})
 			It("outputs a valid json with a version", func() {
 				var response []Version
@@ -107,8 +105,7 @@ var _ = Describe("smuggler commands", func() {
 			BeforeEach(func() {
 				commandPath = checkPath
 
-				request, err = GetResourceRequestFromYamlManifest(CheckType, manifest, "dummy_command", "a_job")
-				Ω(err).ShouldNot(HaveOccurred())
+				commandPath, request = prepareCommandCheck("dummy_command")
 			})
 
 			It("returns empty version list", func() {
@@ -124,10 +121,7 @@ var _ = Describe("smuggler commands", func() {
 		Context("for the 'check' command", func() {
 			BeforeEach(func() {
 				expectedExitStatus = 2
-				commandPath = checkPath
-
-				request, err = GetResourceRequestFromYamlManifest(CheckType, manifest, "fail_command", "a_job")
-				Ω(err).ShouldNot(HaveOccurred())
+				commandPath, request = prepareCommandCheck("fail_command")
 			})
 
 			It("returns an error", func() {
@@ -137,14 +131,7 @@ var _ = Describe("smuggler commands", func() {
 		Context("for the 'in' command", func() {
 			BeforeEach(func() {
 				expectedExitStatus = 2
-				commandPath = inPath
-
-				tmpPath, err := ioutil.TempDir("", "in_command")
-				Ω(err).ShouldNot(HaveOccurred())
-				dataDir = filepath.Join(tmpPath, "destination")
-
-				request, err = GetResourceRequestFromYamlManifest(InType, manifest, "fail_command", "a_job")
-				Ω(err).ShouldNot(HaveOccurred())
+				commandPath, dataDir, request = prepareCommandIn("fail_command")
 			})
 
 			It("returns an error", func() {
@@ -154,14 +141,7 @@ var _ = Describe("smuggler commands", func() {
 		Context("for the 'out' command", func() {
 			BeforeEach(func() {
 				expectedExitStatus = 2
-				commandPath = outPath
-
-				tmpPath, err := ioutil.TempDir("", "out_command")
-				Ω(err).ShouldNot(HaveOccurred())
-				dataDir = filepath.Join(tmpPath, "source")
-
-				request, err = GetResourceRequestFromYamlManifest(OutType, manifest, "fail_command", "a_job")
-				Ω(err).ShouldNot(HaveOccurred())
+				commandPath, dataDir, request = prepareCommandOut("fail_command")
 			})
 
 			It("returns an error", func() {
@@ -169,4 +149,40 @@ var _ = Describe("smuggler commands", func() {
 			})
 		})
 	})
+
 })
+
+func prepareCommandCheck(manifestDefinitionName string) (string, ResourceRequest) {
+	commandPath := checkPath
+
+	request, err := GetResourceRequestFromYamlManifest(CheckType, manifest, manifestDefinitionName, "a_job")
+	Ω(err).ShouldNot(HaveOccurred())
+
+	return commandPath, request
+}
+
+func prepareCommandIn(manifestDefinitionName string) (string, string, ResourceRequest) {
+	commandPath := inPath
+
+	tmpPath, err := ioutil.TempDir("", "in_command")
+	Ω(err).ShouldNot(HaveOccurred())
+	dataDir := filepath.Join(tmpPath, "destination")
+
+	request, err := GetResourceRequestFromYamlManifest(InType, manifest, "fail_command", "a_job")
+	Ω(err).ShouldNot(HaveOccurred())
+
+	return commandPath, dataDir, request
+}
+
+func prepareCommandOut(manifestDefinitionName string) (string, string, ResourceRequest) {
+	commandPath := outPath
+
+	tmpPath, err := ioutil.TempDir("", "in_command")
+	Ω(err).ShouldNot(HaveOccurred())
+	dataDir := filepath.Join(tmpPath, "destination")
+
+	request, err := GetResourceRequestFromYamlManifest(OutType, manifest, "fail_command", "a_job")
+	Ω(err).ShouldNot(HaveOccurred())
+
+	return commandPath, dataDir, request
+}
