@@ -44,6 +44,11 @@ func Fatal(doing string, err error, exitCode int) {
 	os.Exit(exitCode)
 }
 
+func Abort(msg string, args ...interface{}) {
+	Sayf(colorstring.Color("[red]%s\n"), args...)
+	os.Exit(1)
+}
+
 func Sayf(message string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, message, args...)
 }

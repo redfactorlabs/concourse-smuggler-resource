@@ -42,48 +42,41 @@ type MetadataPair struct {
 	Value string `json:"value"`
 }
 
-type CheckRequest struct {
-	Source  Source  `json:"source"`
-	Version Version `json:"version"`
+type RequestType string
+
+func (t RequestType) Name() string {
+	return string(t)
 }
 
-func NewCheckRequestFromJson(s string) (CheckRequest, error) {
-	request := CheckRequest{}
-	err := json.NewDecoder(strings.NewReader(s)).Decode(&request)
-	return request, err
-}
+const (
+	CheckType RequestType = "check"
+	InType    RequestType = "in"
+	OutType   RequestType = "out"
+)
 
-type CheckResponse []Version
-
-type InRequest struct {
+type ResourceRequest struct {
 	Source  Source            `json:"source"`
 	Version Version           `json:"version"`
 	Params  map[string]string `json:"params,omitempty"`
+	Type    RequestType       `json:-`
 }
 
-func NewInRequestFromJson(s string) (InRequest, error) {
-	request := InRequest{}
-	err := json.NewDecoder(strings.NewReader(s)).Decode(&request)
+func NewResourceRequestFromJson(jsonString string, requestType RequestType) (ResourceRequest, error) {
+	request := ResourceRequest{}
+	err := json.NewDecoder(strings.NewReader(jsonString)).Decode(&request)
+	request.Type = requestType
 	return request, err
 }
 
-type InResponse struct {
-	Version  Version        `json:"version"`
-	Metadata []MetadataPair `json:"metadata"`
+type ResourceResponse struct {
+	Version  Version        `json:"version,omitempty"`
+	Versions []Version      `json:"versions,omitempty"`
+	Metadata []MetadataPair `json:"metadata,omitempty"`
+	Type     RequestType    `json:"-"`
 }
 
-type OutRequest struct {
-	Source Source            `json:"source"`
-	Params map[string]string `json:"params,omitempty"`
-}
-
-func NewOutRequestFromJson(s string) (OutRequest, error) {
-	request := OutRequest{}
-	err := json.NewDecoder(strings.NewReader(s)).Decode(&request)
-	return request, err
-}
-
-type OutResponse struct {
-	Version  Version        `json:"version"`
-	Metadata []MetadataPair `json:"metadata"`
+func (r *ResourceResponse) IsEmpty() bool {
+	return r.Version.VersionID == "" &&
+		len(r.Versions) == 0 &&
+		len(r.Metadata) == 0
 }

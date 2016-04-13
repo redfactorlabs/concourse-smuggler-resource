@@ -1,7 +1,9 @@
-package cmd_test
+package main_test
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -21,7 +23,17 @@ type suiteData struct {
 }
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	cp, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/check")
+	gp, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/smuggler")
+	Ω(err).ShouldNot(HaveOccurred())
+	gpDir := filepath.Dir(gp)
+	cp := filepath.Join(gpDir, "check")
+	os.Symlink(gp, cp)
+	Ω(err).ShouldNot(HaveOccurred())
+	ip := filepath.Join(gpDir, "in")
+	os.Symlink(gp, ip)
+	Ω(err).ShouldNot(HaveOccurred())
+	op := filepath.Join(gpDir, "out")
+	os.Symlink(gp, op)
 	Ω(err).ShouldNot(HaveOccurred())
 
 	data, err := json.Marshal(suiteData{

@@ -65,57 +65,18 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 	return err
 }
 
-func (command *SmugglerCommand) RunCheck(request CheckRequest) (CheckResponse, error) {
-	command.logger.Printf("[INFO] Running check action")
+func (command *SmugglerCommand) RunAction(dataDir string, request ResourceRequest) (ResourceResponse, error) {
+	command.logger.Printf("[INFO] Running %s action", string(request.Type))
 
-	var response = CheckResponse{}
-
-	if ok, message := request.Source.IsValid(); !ok {
-		return response, errors.New(message)
-	}
-
-	commandDefinition := request.Source.FindCommand("check")
-	if commandDefinition == nil {
-		return response, nil
-	}
-
-	outputDir, err := ioutil.TempDir("", "smuggler-run")
-	if err != nil {
-		return response, err
-	}
-	defer os.RemoveAll(outputDir)
-
-	params := copyMaps(request.Source.ExtraParams)
-	params["ACTION"] = "check"
-	params["COMMAND"] = "check"
-	params["OUTPUT_DIR"] = outputDir
-
-	err = command.Run(*commandDefinition, params)
-	if err != nil {
-		return response, err
-	}
-
-	response, err = readVersions(filepath.Join(outputDir, "versions"))
-	if err != nil {
-		return response, err
-	}
-
-	return response, nil
-}
-
-func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) (InResponse, error) {
-	command.logger.Printf("[INFO] Running in action")
-
-	var response = InResponse{
-		Version: request.Version,
-	}
+	var response = ResourceResponse{Type: request.Type}
 
 	if ok, message := request.Source.IsValid(); !ok {
 		return response, errors.New(message)
 	}
 
-	commandDefinition := request.Source.FindCommand("in")
+	commandDefinition := request.Source.FindCommand(string(request.Type))
 	if commandDefinition == nil {
+		command.logger.Printf("[INFO] No command definition, skipping")
 		return response, nil
 	}
 
@@ -126,69 +87,46 @@ func (command *SmugglerCommand) RunIn(destinationDir string, request InRequest) 
 	defer os.RemoveAll(outputDir)
 
 	params := copyMaps(request.Source.ExtraParams, request.Params)
-	params["ACTION"] = "in"
-	params["COMMAND"] = "in"
-	params["DESTINATION_DIR"] = destinationDir
-	params["VERSION_ID"] = request.Version.VersionID
+	params["ACTION"] = string(request.Type)
+	params["COMMAND"] = string(request.Type)
 	params["OUTPUT_DIR"] = outputDir
+	switch request.Type {
+	case "check":
+		params["VERSION_ID"] = request.Version.VersionID
+	case "in":
+		params["DESTINATION_DIR"] = dataDir
+		params["VERSION_ID"] = request.Version.VersionID
+	case "out":
+		params["SOURCES_DIR"] = dataDir
+	}
 
 	err = command.Run(*commandDefinition, params)
 	if err != nil {
 		return response, err
 	}
 
-	// We always use the same version that we get in the request
-	response.Version = request.Version
-	response.Metadata, err = readMetadata(filepath.Join(outputDir, "metadata"))
+	versions, err := readVersions(filepath.Join(outputDir, "versions"))
 	if err != nil {
 		return response, err
 	}
+	command.logger.Printf("[INFO] command reports versions '%q'", versions)
 
-	return response, nil
-}
-
-func (command *SmugglerCommand) RunOut(sourcesDir string, request OutRequest) (OutResponse, error) {
-	command.logger.Printf("[INFO] Running out action")
-
-	var response = OutResponse{}
-
-	if ok, message := request.Source.IsValid(); !ok {
-		return response, errors.New(message)
-	}
-
-	commandDefinition := request.Source.FindCommand("out")
-	if commandDefinition == nil {
-		return response, errors.New("No out command defined. You must define one to generate versions.")
-	}
-
-	outputDir, err := ioutil.TempDir("", "smuggler-run")
+	metadata, err := readMetadata(filepath.Join(outputDir, "metadata"))
 	if err != nil {
 		return response, err
 	}
-	defer os.RemoveAll(outputDir)
+	command.logger.Printf("[INFO] command reports metadata '%q'", metadata)
 
-	params := copyMaps(request.Source.ExtraParams, request.Params)
-	params["ACTION"] = "out"
-	params["COMMAND"] = "out"
-	params["SOURCES_DIR"] = sourcesDir
-	params["OUTPUT_DIR"] = outputDir
-
-	err = command.Run(*commandDefinition, params)
-	if err != nil {
-		return response, err
-	}
-
-	versions, err := readVersions(filepath.Join(outputDir, "version"))
-	if err != nil {
-		return response, err
-	}
-	if len(versions) == 0 {
-		return response, fmt.Errorf("No version found in '%s'", filepath.Join(outputDir, "version"))
-	}
-	response.Version = versions[0]
-	response.Metadata, err = readMetadata(filepath.Join(outputDir, "metadata"))
-	if err != nil {
-		return response, err
+	switch request.Type {
+	case "check":
+		response.Versions = versions
+	case "in", "out":
+		if len(versions) > 0 {
+			response.Version = versions[0]
+		} else {
+			response.Version = request.Version
+		}
+		response.Metadata = metadata
 	}
 
 	return response, nil

@@ -2,15 +2,16 @@ package test
 
 import (
 	"fmt"
-	"github.com/ghodss/yaml"
 	"io/ioutil"
-	"path/filepath"
+
+	"github.com/ghodss/yaml"
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
-type ResourceDefinition struct {
+type Manifest struct {
 	Resources []Resource `json: resources`
+	Jobs      []Job      `json: jobs`
 }
 
 type Resource struct {
@@ -19,15 +20,69 @@ type Resource struct {
 	Source Source `json:source`
 }
 
-func ResourceSourceFromYamlManifest(yaml_manifest string, resource_name string) (*Source, error) {
-	var resourceDefinition ResourceDefinition
-	err := yaml.Unmarshal([]byte(yaml_manifest), &resourceDefinition)
+type Job struct {
+	Name string `json:name`
+	Plan []Task `json:plan`
+}
+
+type Task struct {
+	GetName string            `json:"get"`
+	PutName string            `json:"put"`
+	Params  map[string]string `json:params`
+}
+
+func ManifestFromYaml(yaml_manifest string) (Manifest, error) {
+	var manifest Manifest
+	err := yaml.Unmarshal([]byte(yaml_manifest), &manifest)
+	return manifest, err
+}
+
+func GetResourceRequestFromYamlManifest(requestType RequestType, yaml_manifest string, resource_name string, job_name string) (ResourceRequest, error) {
+	resourceRequest := ResourceRequest{Type: requestType}
+
+	manifest, err := ManifestFromYaml(yaml_manifest)
+	if err != nil {
+		return resourceRequest, err
+	}
+	var resource *Resource
+	for _, r := range manifest.Resources {
+		if r.Name == resource_name {
+			resource = &r
+			break
+		}
+	}
+	if resource == nil {
+		return resourceRequest, fmt.Errorf("Cannot find a resource called '%s' in the yaml definition.", resource_name)
+	}
+	resourceRequest.Source = resource.Source
+
+	for _, j := range manifest.Jobs {
+		if j.Name == job_name {
+			for _, t := range j.Plan {
+				if requestType == InType && t.GetName == resource_name {
+					resourceRequest.Params = t.Params
+				}
+				if requestType == OutType && t.PutName == resource_name {
+					resourceRequest.Params = t.Params
+				}
+			}
+		}
+	}
+
+	if requestType == InType || requestType == CheckType {
+		resourceRequest.Version = Version{VersionID: "1.2.3"}
+	}
+
+	return resourceRequest, nil
+}
+
+func ParamsFromYamlManifest(yaml_manifest string, resource_name string) (*Source, error) {
+	manifest, err := ManifestFromYaml(yaml_manifest)
 	if err != nil {
 		return nil, err
 	}
-
 	var resource *Resource
-	for _, r := range resourceDefinition.Resources {
+	for _, r := range manifest.Resources {
 		if r.Name == resource_name {
 			resource = &r
 			break
@@ -40,8 +95,7 @@ func ResourceSourceFromYamlManifest(yaml_manifest string, resource_name string) 
 	return &resource.Source, nil
 }
 
-func Fixture(filename string) string {
-	path := filepath.Join("fixtures", filename)
+func Fixture(path string) string {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
