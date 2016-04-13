@@ -80,7 +80,33 @@ resources:
       - -c
       - |
         exit 2
+    - name: out
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        exit 2
+    - name: in
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        exit 2
 
 - name: dummy_command
   type: smuggler
+
+jobs:
+  - name: a_job
+    plan:
+      - get: complex_command
+        params:
+          param4: val4
+          param5: "something with spaces"
+      - put: complex_command
+        params:
+          param4: val4
+          param5: "something with spaces"
 
