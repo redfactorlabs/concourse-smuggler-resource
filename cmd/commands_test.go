@@ -1,4 +1,4 @@
-package cmd_test
+package commands_test
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -27,12 +28,14 @@ var _ = Describe("smuggler commands", func() {
 		logFile *os.File
 
 		commandPath        string
+		dataDir            string
 		expectedExitStatus int
 		request            ResourceRequest
 	)
 
 	BeforeEach(func() {
 		expectedExitStatus = 0
+		dataDir = ""
 	})
 
 	JustBeforeEach(func() {
@@ -43,7 +46,11 @@ var _ = Describe("smuggler commands", func() {
 		err = json.NewEncoder(stdin).Encode(request)
 		Ω(err).ShouldNot(HaveOccurred())
 
-		command = exec.Command(commandPath)
+		if dataDir == "" {
+			command = exec.Command(commandPath)
+		} else {
+			command = exec.Command(commandPath, dataDir)
+		}
 		command.Stdin = stdin
 
 		// Point log file to a temporary location
@@ -120,6 +127,40 @@ var _ = Describe("smuggler commands", func() {
 				commandPath = checkPath
 
 				request, err = GetResourceRequestFromYamlManifest(CheckType, manifest, "fail_command", "a_job")
+				Ω(err).ShouldNot(HaveOccurred())
+			})
+
+			It("returns an error", func() {
+				Ω(session.Err).Should(gbytes.Say("error running command"))
+			})
+		})
+		Context("for the 'in' command", func() {
+			BeforeEach(func() {
+				expectedExitStatus = 2
+				commandPath = inPath
+
+				tmpPath, err := ioutil.TempDir("", "in_command")
+				Ω(err).ShouldNot(HaveOccurred())
+				dataDir = filepath.Join(tmpPath, "destination")
+
+				request, err = GetResourceRequestFromYamlManifest(InType, manifest, "fail_command", "a_job")
+				Ω(err).ShouldNot(HaveOccurred())
+			})
+
+			It("returns an error", func() {
+				Ω(session.Err).Should(gbytes.Say("error running command"))
+			})
+		})
+		Context("for the 'out' command", func() {
+			BeforeEach(func() {
+				expectedExitStatus = 2
+				commandPath = outPath
+
+				tmpPath, err := ioutil.TempDir("", "out_command")
+				Ω(err).ShouldNot(HaveOccurred())
+				dataDir = filepath.Join(tmpPath, "source")
+
+				request, err = GetResourceRequestFromYamlManifest(OutType, manifest, "fail_command", "a_job")
 				Ω(err).ShouldNot(HaveOccurred())
 			})
 

@@ -1,9 +1,9 @@
-package in
+package main
 
 import (
-	"encoding/json"
 	"os"
 
+	"github.com/redfactorlabs/concourse-smuggler-resource/cmd"
 	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 	"github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
@@ -15,29 +15,5 @@ func main() {
 	}
 
 	sourceDir := os.Args[1]
-
-	var request smuggler.OutRequest
-	inputRequest(&request)
-
-	command := smuggler.NewSmugglerCommand(nil)
-
-	response, err := command.RunOut(sourceDir, request)
-	if err != nil {
-		utils.Fatal("running command", err, command.LastCommandExitStatus())
-	}
-	os.Stderr.Write([]byte(command.LastCommandCombinedOuput()))
-
-	outputResponse(response)
-}
-
-func inputRequest(request *smuggler.OutRequest) {
-	if err := json.NewDecoder(os.Stdin).Decode(request); err != nil {
-		utils.Fatal("reading request from stdin", err, 1)
-	}
-}
-
-func outputResponse(response smuggler.OutResponse) {
-	if err := json.NewEncoder(os.Stdout).Encode(response); err != nil {
-		utils.Fatal("writing response to stdout", err, 1)
-	}
+	commands.SmugglerMain(sourceDir, smuggler.OutType)
 }
