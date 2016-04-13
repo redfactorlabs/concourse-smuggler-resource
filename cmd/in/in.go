@@ -19,12 +19,13 @@ func main() {
 	var request smuggler.InRequest
 	inputRequest(&request)
 
-	command := smuggler.NewSmugglerCommand()
+	command := smuggler.NewSmugglerCommand(nil)
 
 	response, err := command.RunIn(destinationDir, request)
 	if err != nil {
 		utils.Fatal("running command", err, command.LastCommandExitStatus())
 	}
+	os.Stderr.Write([]byte(command.LastCommandCombinedOuput()))
 
 	outputResponse(response)
 }

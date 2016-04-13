@@ -23,15 +23,15 @@ type suiteData struct {
 var _ = SynchronizedBeforeSuite(func() []byte {
 	cp, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/check")
 	Ω(err).ShouldNot(HaveOccurred())
-	ip, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/in")
-	Ω(err).ShouldNot(HaveOccurred())
-	op, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/out")
-	Ω(err).ShouldNot(HaveOccurred())
+	//ip, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/in")
+	//Ω(err).ShouldNot(HaveOccurred())
+	//op, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/out")
+	//Ω(err).ShouldNot(HaveOccurred())
 
 	data, err := json.Marshal(suiteData{
 		CheckPath: cp,
-		InPath:    ip,
-		OutPath:   op,
+		//	InPath:    ip,
+		//	OutPath:   op,
 	})
 	Ω(err).ShouldNot(HaveOccurred())
 
