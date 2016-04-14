@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+./scripts/test
+./scripts/build
+docker build -t redfactorlabs/concourse-smuggler-resource:ubuntu-14.04 .

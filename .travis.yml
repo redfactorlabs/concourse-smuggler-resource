@@ -1,0 +1,13 @@
+sudo: false # Enables container based builds
+
+language: go
+go:
+ - 1.6
+
+install:
+  - export PATH=$PATH:$HOME/gopath/bin
+  - go get github.com/tools/godep
+  - godep restore
+
+script:
+ - ./scripts/test
