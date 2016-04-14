@@ -103,8 +103,6 @@ var _ = Describe("smuggler commands", func() {
 	Context("when given a dummy command", func() {
 		Context("for the 'check' command", func() {
 			BeforeEach(func() {
-				commandPath = checkPath
-
 				commandPath, request = prepareCommandCheck("dummy_command")
 			})
 
@@ -113,6 +111,28 @@ var _ = Describe("smuggler commands", func() {
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(response).Should(BeEmpty())
+			})
+		})
+		Context("for the 'in' command", func() {
+			BeforeEach(func() {
+				commandPath, dataDir, request = prepareCommandIn("dummy_command")
+			})
+			It("returns empty response", func() {
+				var response ResourceResponse
+				err := json.Unmarshal(session.Out.Contents(), &response)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(response.IsEmpty()).Should(BeTrue())
+			})
+		})
+		Context("for the 'out' command", func() {
+			BeforeEach(func() {
+				commandPath, dataDir, request = prepareCommandOut("dummy_command")
+			})
+			It("returns empty response", func() {
+				var response ResourceResponse
+				err := json.Unmarshal(session.Out.Contents(), &response)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(response.IsEmpty()).Should(BeTrue())
 			})
 		})
 	})
@@ -168,7 +188,7 @@ func prepareCommandIn(manifestDefinitionName string) (string, string, ResourceRe
 	Ω(err).ShouldNot(HaveOccurred())
 	dataDir := filepath.Join(tmpPath, "destination")
 
-	request, err := GetResourceRequestFromYamlManifest(InType, manifest, "fail_command", "a_job")
+	request, err := GetResourceRequestFromYamlManifest(InType, manifest, manifestDefinitionName, "a_job")
 	Ω(err).ShouldNot(HaveOccurred())
 
 	return commandPath, dataDir, request
@@ -181,7 +201,7 @@ func prepareCommandOut(manifestDefinitionName string) (string, string, ResourceR
 	Ω(err).ShouldNot(HaveOccurred())
 	dataDir := filepath.Join(tmpPath, "destination")
 
-	request, err := GetResourceRequestFromYamlManifest(OutType, manifest, "fail_command", "a_job")
+	request, err := GetResourceRequestFromYamlManifest(OutType, manifest, manifestDefinitionName, "a_job")
 	Ω(err).ShouldNot(HaveOccurred())
 
 	return commandPath, dataDir, request
