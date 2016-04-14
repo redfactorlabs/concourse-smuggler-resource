@@ -1,2 +1,7 @@
 #!/bin/bash
-godep go test ./cmd/smuggler ./smuggler $@
+
+set -e
+
+test -z "$(go fmt ./...)"
+
+godep go test ./cmd/smuggler ./smuggler -v $@
