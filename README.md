@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/redfactorlabs/concourse-smuggler-resource.svg?branch=master)](https://travis-ci.org/redfactorlabs/concourse-smuggler-resource)
+
 # concourse-smuggler-resource
 
 Concourse generic resource, which would allow quickly implement any resource
