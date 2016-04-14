@@ -23,7 +23,7 @@ type suiteData struct {
 }
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	gp, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd")
+	gp, err := gexec.Build("github.com/redfactorlabs/concourse-smuggler-resource/cmd/smuggler")
 	Ω(err).ShouldNot(HaveOccurred())
 	gpDir := filepath.Dir(gp)
 	cp := filepath.Join(gpDir, "check")
