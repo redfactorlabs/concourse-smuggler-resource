@@ -2,6 +2,10 @@
 	"ImportPath": "github.com/redfactorlabs/concourse-smuggler-resource",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v62",
+	"Packages": [
+		"./cmd/smuggler",
+		"./smuggler"
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
