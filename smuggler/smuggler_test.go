@@ -10,7 +10,7 @@ import (
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
-var manifest = Fixture("pipeline.yml")
+var manifest = Fixture("../fixtures/pipeline.yml")
 var logger = log.New(GinkgoWriter, "smuggler: ", log.Lmicroseconds)
 
 var request ResourceRequest

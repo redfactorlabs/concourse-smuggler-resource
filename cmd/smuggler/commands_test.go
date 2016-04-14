@@ -19,7 +19,7 @@ import (
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
-var manifest = Fixture("pipeline.yml")
+var manifest = Fixture("../../fixtures/pipeline.yml")
 var err error
 
 var _ = Describe("smuggler commands", func() {

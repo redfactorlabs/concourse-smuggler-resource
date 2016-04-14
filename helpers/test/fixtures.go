@@ -3,7 +3,6 @@ package test
 import (
 	"fmt"
 	"io/ioutil"
-	"path/filepath"
 
 	"github.com/ghodss/yaml"
 
@@ -96,8 +95,7 @@ func ParamsFromYamlManifest(yaml_manifest string, resource_name string) (*Source
 	return &resource.Source, nil
 }
 
-func Fixture(filename string) string {
-	path := filepath.Join("fixtures", filename)
+func Fixture(path string) string {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
