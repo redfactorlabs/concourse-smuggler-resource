@@ -98,6 +98,18 @@ var _ = Describe("smuggler commands", func() {
 				Ω(stderr).Should(ContainSubstring("param3=123"))
 			})
 		})
+		Context("for the 'in' command", func() {
+			BeforeEach(func() {
+				commandPath, dataDir, request = prepareCommandIn("complex_command")
+			})
+			Context("when running InOutCommonSmugglerTests()", InOutCommonSmugglerTests(&session))
+		})
+		Context("for the 'out' command", func() {
+			BeforeEach(func() {
+				commandPath, dataDir, request = prepareCommandOut("complex_command")
+			})
+			Context("when running InOutCommonSmugglerTests()", InOutCommonSmugglerTests(&session))
+		})
 	})
 
 	Context("when given a dummy command", func() {
@@ -205,4 +217,36 @@ func prepareCommandOut(manifestDefinitionName string) (string, string, ResourceR
 	Ω(err).ShouldNot(HaveOccurred())
 
 	return commandPath, dataDir, request
+}
+
+func InOutCommonSmugglerTests(session **gexec.Session) func() {
+	return func() {
+		It("outputs a valid json with a version", func() {
+			var response ResourceResponse
+			err := json.Unmarshal((*session).Out.Contents(), &response)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(response.Version).Should(Equal(Version{VersionID: "1.2.3"}))
+		})
+		It("outputs a valid json with a version", func() {
+			var response ResourceResponse
+			err := json.Unmarshal((*session).Out.Contents(), &response)
+			Ω(err).ShouldNot(HaveOccurred())
+			expectedMetadata := []MetadataPair{
+				MetadataPair{Name: "value1", Value: "something quite long"},
+				MetadataPair{Name: "value_2", Value: "2"},
+			}
+			Ω(response.Metadata).Should(Equal(expectedMetadata))
+		})
+		It("outputs the commands output", func() {
+			stderr := (*session).Err.Contents()
+
+			Ω(stderr).Should(ContainSubstring("Command Start"))
+			Ω(stderr).Should(ContainSubstring("Command End"))
+			Ω(stderr).Should(ContainSubstring("param1=test"))
+			Ω(stderr).Should(ContainSubstring("param2=true"))
+			Ω(stderr).Should(ContainSubstring("param3=123"))
+			Ω(stderr).Should(ContainSubstring("param4=val4"))
+			Ω(stderr).Should(ContainSubstring("param5=something with spaces"))
+		})
+	}
 }
