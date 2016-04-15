@@ -34,6 +34,7 @@ My intended implementation and ideas are:
  * [X] Add example Dockerfile
  * [ ] Read config from `/opt/resource/config.yml`
  * [ ] Add some examples to README.md
+ * [ ] Print output to console, at least on error.
  * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
  * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
  * [ ] Write raw requests and read raw responses as json from `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`
