@@ -1,5 +1,10 @@
 #!/bin/bash
+set -e
 
 mkdir -p assets
-CGO_ENABLED=1 godep go build -o assets/smuggler ./cmd/smuggler
+export CGO_ENABLED=1
+godep go build -o assets/smuggler ./cmd/smuggler
+export GOOS=linux
+export GOARCH=amd64
+godep go build -o assets/smuggler-linux-amd64 ./cmd/smuggler
 
