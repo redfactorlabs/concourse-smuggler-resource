@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,9 +35,7 @@ func main() {
 		dataDir = os.Args[1]
 		requestType = smuggler.OutType
 	default:
-		utils.Fatal("identifying resource type",
-			fmt.Errorf("command name '%s' does not contain check/in/out", commandName),
-			1)
+		utils.Abort("identifying resource type: command name '%s' does not contain check/in/out", commandName)
 	}
 
 	// Open Log file
