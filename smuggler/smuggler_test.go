@@ -92,6 +92,9 @@ var _ = Describe("SmugglerCommand Actions", func() {
 			BeforeEach(func() {
 				fixtureResourceName = "complex_command"
 			})
+			It("it gets the version id", func() {
+				Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("version=1.2.3"))
+			})
 			It("it returns versions as list of strings", func() {
 				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
 				Ω(response.Versions).Should(BeEquivalentTo(vs))
@@ -112,6 +115,9 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				fixtureResourceName = "complex_command"
 			})
 
+			It("it gets the version id", func() {
+				Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("version=1.2.3"))
+			})
 			It("it gets the destination dir", func() {
 				Ω(command.LastCommandCombinedOuput()).Should(ContainSubstring("destinationDir=/some/path"))
 			})

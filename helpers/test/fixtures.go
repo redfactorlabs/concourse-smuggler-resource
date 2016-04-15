@@ -69,7 +69,7 @@ func GetResourceRequestFromYamlManifest(requestType RequestType, yaml_manifest s
 		}
 	}
 
-	if requestType == InType || requestType == OutType {
+	if requestType == InType || requestType == CheckType {
 		resourceRequest.Version = Version{VersionID: "1.2.3"}
 	}
 

@@ -17,6 +17,7 @@ resources:
         echo Command Start
         echo "action=${SMUGGLER_ACTION}"
         echo "command=${SMUGGLER_COMMAND}"
+        echo "version=${SMUGGLER_VERSION_ID}"
         echo "param1=${SMUGGLER_param1}"
         echo "param2=${SMUGGLER_param2}"
         echo "param3=${SMUGGLER_param3}"
@@ -32,8 +33,8 @@ resources:
       - -c
       - |
         echo Command Start
-        echo "version=$SMUGGLER_VERSION_ID"
-        echo "destinationDir=$SMUGGLER_DESTINATION_DIR"
+        echo "version=${SMUGGLER_VERSION_ID}"
+        echo "destinationDir=${SMUGGLER_DESTINATION_DIR}"
         echo "action=${SMUGGLER_ACTION}"
         echo "command=${SMUGGLER_COMMAND}"
         echo "param1=${SMUGGLER_param1}"
@@ -63,7 +64,7 @@ resources:
         echo "param3=${SMUGGLER_param3}"
         echo "param4=${SMUGGLER_param4}"
         echo "param5=${SMUGGLER_param5}"
-        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/version
+        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
         echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
         echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
         echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata

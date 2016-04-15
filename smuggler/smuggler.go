@@ -91,6 +91,8 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 	params["COMMAND"] = string(request.Type)
 	params["OUTPUT_DIR"] = outputDir
 	switch request.Type {
+	case "check":
+		params["VERSION_ID"] = request.Version.VersionID
 	case "in":
 		params["DESTINATION_DIR"] = dataDir
 		params["VERSION_ID"] = request.Version.VersionID
