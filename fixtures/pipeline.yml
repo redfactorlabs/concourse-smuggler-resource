@@ -99,6 +99,12 @@ resources:
 - name: dummy_command
   type: smuggler
 
+- name: empty_command_with_params
+  type: smuggler
+  source:
+    extra_params:
+      param1: test
+
 jobs:
   - name: a_job
     plan:

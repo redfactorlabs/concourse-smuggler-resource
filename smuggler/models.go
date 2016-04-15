@@ -23,6 +23,31 @@ func (source Source) FindCommand(name string) *CommandDefinition {
 	return nil
 }
 
+// Merges two configuration Source.
+// * Commands: get merged by key 'name'. sourceB overrides sourceA
+// * ExtraParams: gets merged by key. sourceB overrides sourceA
+func MergeSource(sourceA, sourceB *Source) *Source {
+	var newSource Source
+
+	newSource.Commands = make([]CommandDefinition, 0, 6)
+	for _, command := range sourceB.Commands {
+		newSource.Commands = append(newSource.Commands, command)
+	}
+	for _, command := range sourceA.Commands {
+		if newSource.FindCommand(command.Name) == nil {
+			newSource.Commands = append(newSource.Commands, command)
+		}
+	}
+	newSource.ExtraParams = make(map[string]string)
+	for k, v := range sourceA.ExtraParams {
+		newSource.ExtraParams[k] = v
+	}
+	for k, v := range sourceB.ExtraParams {
+		newSource.ExtraParams[k] = v
+	}
+	return &newSource
+}
+
 type CommandDefinition struct {
 	Name string   `json:"name"`
 	Path string   `json:"path"`
