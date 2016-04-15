@@ -17,6 +17,8 @@ import (
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource/helpers/test"
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
+
+	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 )
 
 var manifest = Fixture("../../fixtures/pipeline.yml")
@@ -41,6 +43,8 @@ var _ = Describe("smuggler commands", func() {
 	JustBeforeEach(func() {
 		var err error
 		var command *exec.Cmd
+
+		RegisterFailHandler(Fail)
 
 		stdin := &bytes.Buffer{}
 		err = json.NewEncoder(stdin).Encode(request)
@@ -178,6 +182,106 @@ var _ = Describe("smuggler commands", func() {
 
 			It("returns an error", func() {
 				Ω(session.Err).Should(gbytes.Say("error running command"))
+			})
+		})
+	})
+
+	Context("when there is local config file 'smuggler.yml' that is empty", func() {
+		BeforeEach(func() {
+			err := utils.Copy("../../fixtures/empty_smuggler.yml",
+				filepath.Join(filepath.Dir(checkPath), "smuggler.yml"))
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+		Context("when running 'check' with a dummy definition", func() {
+			BeforeEach(func() {
+				commandPath, request = prepareCommandCheck("dummy_command")
+			})
+
+			It("returns empty version list", func() {
+				var response []Version
+				err := json.Unmarshal(session.Out.Contents(), &response)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(response).Should(BeEmpty())
+			})
+		})
+
+		Context("when running 'check' with a complex_command definition", func() {
+			BeforeEach(func() {
+				commandPath = checkPath
+				commandPath, request = prepareCommandCheck("complex_command")
+			})
+			It("outputs a valid json with a version", func() {
+				var response []Version
+				err := json.Unmarshal(session.Out.Contents(), &response)
+				Ω(err).ShouldNot(HaveOccurred())
+				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+				Ω(response).Should(BeEquivalentTo(vs))
+			})
+
+			It("outputs the commands output", func() {
+				stderr := session.Err.Contents()
+
+				Ω(stderr).Should(ContainSubstring("Command Start"))
+				Ω(stderr).Should(ContainSubstring("Command End"))
+				Ω(stderr).Should(ContainSubstring("param1=test"))
+				Ω(stderr).Should(ContainSubstring("param2=true"))
+				Ω(stderr).Should(ContainSubstring("param3=123"))
+			})
+		})
+
+	})
+
+	Context("when there is local config file 'smuggler.yml' with config", func() {
+		BeforeEach(func() {
+			err := utils.Copy("../../fixtures/full_smuggler.yml",
+				filepath.Join(filepath.Dir(checkPath), "smuggler.yml"))
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+		Context("when running 'check' with a empty command definition", func() {
+			BeforeEach(func() {
+				commandPath, request = prepareCommandCheck("dummy_command")
+			})
+
+			It("returns versions of the config file", func() {
+				var response []Version
+				err := json.Unmarshal(session.Out.Contents(), &response)
+				Ω(err).ShouldNot(HaveOccurred())
+				vs := []Version{Version{VersionID: "4.5.6"}, Version{VersionID: "4.5.7"}}
+				Ω(response).Should(BeEquivalentTo(vs))
+			})
+
+			It("outputs the commands output from the command definition", func() {
+				stderr := session.Err.Contents()
+
+				Ω(stderr).Should(ContainSubstring("config_param1=param_in_config"))
+				Ω(stderr).Should(ContainSubstring("param1=undef"))
+				Ω(stderr).Should(ContainSubstring("from config file"))
+				Ω(stderr).ShouldNot(ContainSubstring("Command Start"))
+			})
+		})
+
+		Context("when running 'check' with a complex command definition", func() {
+			BeforeEach(func() {
+				commandPath, request = prepareCommandCheck("complex_command")
+			})
+
+			It("returns versions of the definition", func() {
+				var response []Version
+				err := json.Unmarshal(session.Out.Contents(), &response)
+				Ω(err).ShouldNot(HaveOccurred())
+				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+				Ω(response).Should(BeEquivalentTo(vs))
+			})
+
+			It("outputs the commands output from the definition", func() {
+				stderr := session.Err.Contents()
+
+				Ω(stderr).Should(ContainSubstring("Command Start"))
+				Ω(stderr).Should(ContainSubstring("Command End"))
+				Ω(stderr).Should(ContainSubstring("param1=test"))
+				Ω(stderr).Should(ContainSubstring("param2=true"))
+				Ω(stderr).Should(ContainSubstring("param3=123"))
+				Ω(stderr).ShouldNot(ContainSubstring("from config file"))
 			})
 		})
 	})

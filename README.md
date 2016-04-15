@@ -124,7 +124,6 @@ Output to send to concourse.
  * `${SMUGGLER_OUTPUT_DIR}/metadata`: *Optional.* the metadata for concourse as
    a multiline file with `key=value` pairs separated by `=`
 
-
 ## Complex commands and inline scripts
 
 You can smuggle even more if you use inline scripts included as
@@ -176,6 +175,20 @@ for i, name in enumerate(friends):
  * `ruby`: TODO
 
 # Advanced usage
+
+## Bundle smuggler configuration in `/opt/resource/smuggler.yml` in resource image
+
+You can optionally write all the configuration of the `source` section of
+the resource in the resource container image, in `/opt/resource/smuggler.yml`.
+
+You can still specify any parameter and command in the pipeline, and they will
+override the ones defined in `smuggler.yml` and passed to the commands as
+expected.
+
+This would allow you to encapsulate all the implementation and not expose
+it in the pipelines.
+
+You can also distribute the images as a ready to use resource.
 
 ## Smuggler as framework for new resources
 

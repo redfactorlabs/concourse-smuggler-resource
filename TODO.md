@@ -69,7 +69,7 @@ source:
  * [X] Clean up and simplify tests
  * [X] Document resource in README.md
  * [X] Add example Dockerfile
- * [ ] Read config from `/opt/resource/config.yml`
+ * [X] Read config from `/opt/resource/config.yml`
  * [ ] Add some examples to README.md
  * [ ] Print output to console, at least on error.
  * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
