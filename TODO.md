@@ -24,6 +24,43 @@ My intended implementation and ideas are:
        * Adding the `check/in/out` binaries from `smuggler-resource`
        * Add the `/opt/resource/config.yml`
 
+## Idea for wrapping commands:
+
+Do not implement the wrapped resources as described in #1,
+but let the users to wrap the  wrapped command directly.
+
+Make it easy to do by:
+
+ * Pass and read request/response from stdin/stdout
+ * add an option to filter out the "smuggler" specific options or not.
+ * some smuggler params can be under a key, so they can be filtered out. The
+   smuggler commands read the aprams from envvars
+ * document how to close/redirect stdin/stdout in bash to avoid poluting the
+   output and input.
+
+This way, the user can simply call the other resource directly, which
+will read and write the data.
+
+If the user needs to change the response or request, that is an advance
+use case and they should implement something by themselves. We can include
+some basic examples using jq.
+
+## Add a quick shell out option
+
+Add a quick shell out config for check/in/out, which will:
+ * first try to run the line in bash
+ * second in sh
+ * finally, run it directly
+
+like:
+
+```
+source:
+  smuggler_config:
+    check: "ls something/* | shasum | cut -f 1 -d ' '"
+    in: "cp something/* dest/*"
+```
+
 # MVP
 
  * [X] Basic check/in/out which runs a script command
