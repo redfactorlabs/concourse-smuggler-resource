@@ -68,7 +68,7 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 func (command *SmugglerCommand) RunAction(dataDir string, request ResourceRequest) (ResourceResponse, error) {
 	command.logger.Printf("[INFO] Running %s action", string(request.Type))
 
-	var response = ResourceResponse{}
+	var response = ResourceResponse{Type: request.Type}
 
 	if ok, message := request.Source.IsValid(); !ok {
 		return response, errors.New(message)
