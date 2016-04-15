@@ -11,10 +11,33 @@ import (
 )
 
 func main() {
+	dataDir, requestType := processArguments()
+
+	tempFileLogger := openSmugglerLog()
+
+	// Read request
+	request := smuggler.ResourceRequest{Type: requestType}
+	inputRequest(&request)
+
+	// Execute command
+	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
+
+	response, err := command.RunAction(dataDir, request)
+	if err != nil {
+		utils.Fatal("running command", err, command.LastCommandExitStatus())
+	}
+
+	// Print output to stderr
+	os.Stderr.Write([]byte(command.LastCommandCombinedOuput()))
+
+	outputResponse(response)
+}
+
+// Determine which command is being called by the name
+func processArguments() (string, smuggler.RequestType) {
 	var dataDir string
 	var requestType smuggler.RequestType
 
-	// Determine which command is being called by the name
 	commandName := filepath.Base(os.Args[0])
 	switch {
 	case strings.Contains(commandName, "check"):
@@ -38,37 +61,32 @@ func main() {
 		utils.Abort("identifying resource type: command name '%s' does not contain check/in/out", commandName)
 	}
 
+	return dataDir, requestType
+}
+
+func openSmugglerLog() *utils.TempFileLogger {
 	// Open Log file
 	smugglerLogFileName := utils.GetEnvOrDefault("SMUGGLER_LOG", "/tmp/smuggler.log")
 	tempFileLogger, err := utils.NewTempFileLogger(smugglerLogFileName)
 	if err != nil {
 		utils.Fatal("opening log '/tmp/smuggler.log'", err, 1)
 	}
-
-	// Read request
-	request := smuggler.ResourceRequest{Type: requestType}
-	inputRequest(&request)
-
-	// Execute command
-	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
-
-	response, err := command.RunAction(dataDir, request)
-	if err != nil {
-		utils.Fatal("running command", err, command.LastCommandExitStatus())
-	}
-	os.Stderr.Write([]byte(command.LastCommandCombinedOuput()))
-
-	// Send back response
-	if requestType == smuggler.CheckType {
-		outputResponseCheck(response.Versions)
-	} else {
-		outputResponseInOut(response)
-	}
+	return tempFileLogger
 }
 
+// Read input
 func inputRequest(request *smuggler.ResourceRequest) {
 	if err := json.NewDecoder(os.Stdin).Decode(request); err != nil {
 		utils.Fatal("reading request from stdin", err, 1)
+	}
+}
+
+// Send back response
+func outputResponse(response smuggler.ResourceResponse) {
+	if response.Type == smuggler.CheckType {
+		outputResponseCheck(response.Versions)
+	} else {
+		outputResponseInOut(response)
 	}
 }
 
