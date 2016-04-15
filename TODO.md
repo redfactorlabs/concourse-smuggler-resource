@@ -31,9 +31,9 @@ My intended implementation and ideas are:
  * [X] Add travis testing and Makefile and other scaffolding
  * [X] Clean up and simplify tests
  * [X] Document resource in README.md
- * [ ] Add example Dockerfile with autobuild
- * [ ] Add some examples to README.md
+ * [X] Add example Dockerfile
  * [ ] Read config from `/opt/resource/config.yml`
+ * [ ] Add some examples to README.md
  * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
  * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
  * [ ] Write raw requests and read raw responses as json from `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`
@@ -43,7 +43,11 @@ My intended implementation and ideas are:
  * [ ] Wrap other resources
  * [ ] Resource to "Inject smuggler" in other images, based in smuggler
  * [ ] smuggler for go inline code :)
-
+ * [ ] autobuild docker
+ * [ ] multiflavour docker (alpine, ubuntu, python, ruby, perl...)
+ * [ ] add `source.default_check_version` to keep check version constant
+ * [ ] Better error messages if config syntax is not right: Currently: `error reading request from stdin: json: cannot unmarshal object into Go value of type []smuggler.CommandDefinition
+[0m`
 
 # Smuggling ideas
 

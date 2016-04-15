@@ -2,15 +2,10 @@
 
 # concourse-smuggler-resource
 
-Concourse generic resource, which would enable you to quickly implement any kind of resource.
-
-With *smuggler* you can specify in your pipeline any command, including
-inline scripts, to use in the resource for the `check`, `get` and `put` action,
-
-providing an easy to use integration with concourse via environment variables
-and plain text files.
-
-*Smuggler* ideal for PoC, prototyping, fast development or implementation
+Concourse generic resource, to quickly implement any kind of resource by
+defining any command for the `check`, `get` and `put` actions.
+i
+*Smuggler* is ideal for PoC, prototyping, fast development or implementation
 of simple resources based on existing command line tools.
 
 ## Resource definition
