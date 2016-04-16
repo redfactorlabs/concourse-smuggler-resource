@@ -149,4 +149,12 @@ jobs:
         params:
           param4: val4
           param5: "something with spaces"
+      - get: dump_request_from_stdin
+        params:
+          simple_string_params: "something with spaces"
+          complex_param:
+            with: "keys"
+            and: [ "other", "complex" ]
+            structures: { like: "this" }
+
 

@@ -8,8 +8,8 @@ import (
 )
 
 type Source struct {
-	Commands       []CommandDefinition `json:"commands,omitempty"`
-	SmugglerParams map[string]string   `json:"smuggler_params,omitempty"`
+	Commands       []CommandDefinition    `json:"commands,omitempty"`
+	SmugglerParams map[string]interface{} `json:"smuggler_params,omitempty"`
 }
 
 func (source Source) IsValid() (bool, string) {
@@ -40,7 +40,7 @@ func MergeSource(sourceA, sourceB *Source) *Source {
 			newSource.Commands = append(newSource.Commands, command)
 		}
 	}
-	newSource.SmugglerParams = make(map[string]string)
+	newSource.SmugglerParams = make(map[string]interface{})
 	for k, v := range sourceA.SmugglerParams {
 		newSource.SmugglerParams[k] = v
 	}
@@ -78,10 +78,10 @@ const (
 )
 
 type ResourceRequest struct {
-	Source  Source            `json:"source,omitempty"`
-	Version interface{}       `json:"version,omitempty"`
-	Params  map[string]string `json:"params,omitempty"`
-	Type    RequestType       `json:"-"`
+	Source  Source                 `json:"source,omitempty"`
+	Version interface{}            `json:"version,omitempty"`
+	Params  map[string]interface{} `json:"params,omitempty"`
+	Type    RequestType            `json:"-"`
 }
 
 // Check if the string is json itself, in which case is parsed and

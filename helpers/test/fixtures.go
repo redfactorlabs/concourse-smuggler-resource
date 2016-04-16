@@ -26,9 +26,9 @@ type Job struct {
 }
 
 type Task struct {
-	GetName string            `json:"get"`
-	PutName string            `json:"put"`
-	Params  map[string]string `json:params`
+	GetName string                 `json:"get"`
+	PutName string                 `json:"put"`
+	Params  map[string]interface{} `json:params`
 }
 
 func ManifestFromYaml(yaml_manifest string) (Manifest, error) {

@@ -41,14 +41,16 @@ func (command *SmugglerCommand) LastCommandExitStatus() int {
 	return waitStatus.ExitStatus()
 }
 
-func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]string, jsonRequest []byte) error {
+func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]interface{}, jsonRequest []byte) error {
 
 	path := commandDefinition.Path
 	args := commandDefinition.Args
 
 	params_env := make([]string, 0, len(params))
 	for k, v := range params {
-		params_env = append(params_env, fmt.Sprintf("SMUGGLER_%s=%s", k, v))
+		string_val := InterfaceToJsonString(v)
+		env_key_val := fmt.Sprintf("SMUGGLER_%s=%s", k, string_val)
+		params_env = append(params_env, env_key_val)
 	}
 	params_env = append(params_env, os.Environ()...)
 
@@ -137,12 +139,12 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 	return response, nil
 }
 
-func copyMaps(maps ...map[string]string) map[string]string {
+func copyMaps(maps ...map[string]interface{}) map[string]interface{} {
 	total_len := 0
 	for _, m := range maps {
 		total_len += len(m)
 	}
-	result := make(map[string]string, total_len)
+	result := make(map[string]interface{}, total_len)
 	for _, m := range maps {
 		for k, v := range m {
 			result[k] = v
