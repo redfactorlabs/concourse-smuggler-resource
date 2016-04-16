@@ -1,6 +1,6 @@
 # Non empty config smuggler.yml
 ---
-extra_params:
+smuggler_params:
   config_param1: param_in_config
 commands:
 - name: check

@@ -97,7 +97,7 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 	defer os.RemoveAll(outputDir)
 
 	// Prepare the params to send to the commands
-	params := copyMaps(request.Source.ExtraParams, request.Params)
+	params := copyMaps(request.Source.SmugglerParams, request.Params)
 	params["ACTION"] = string(request.Type)
 	params["COMMAND"] = string(request.Type)
 	params["OUTPUT_DIR"] = outputDir

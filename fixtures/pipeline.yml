@@ -2,7 +2,7 @@ resources:
 - name: complex_command
   type: smuggler
   source:
-    extra_params:
+    smuggler_params:
       param1: test
       param2: true
       param3: 123
@@ -102,7 +102,7 @@ resources:
 - name: empty_command_with_params
   type: smuggler
   source:
-    extra_params:
+    smuggler_params:
       param1: test
 
 - name: dump_request_from_stdin

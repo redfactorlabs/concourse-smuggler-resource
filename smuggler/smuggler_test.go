@@ -230,7 +230,7 @@ func CommonSmugglerTests() func() {
 				Ω(command.LastCommandOutput).Should(ContainSubstring("action=" + string(requestType)))
 				Ω(command.LastCommandOutput).Should(ContainSubstring("command=" + string(requestType)))
 			})
-			It("it can sets the resource extra_params as environment variables", func() {
+			It("it can sets the resource smuggler_params as environment variables", func() {
 				Ω(command.LastCommandOutput).Should(ContainSubstring("param1=test"))
 				Ω(command.LastCommandOutput).Should(ContainSubstring("param2=true"))
 				Ω(command.LastCommandOutput).Should(ContainSubstring("param3=123"))
@@ -257,7 +257,7 @@ func InOutCommonSmugglerTests() func() {
 			BeforeEach(func() {
 				fixtureResourceName = "complex_command"
 			})
-			It("it sets the resource extra_params and 'get' params as environment variables", func() {
+			It("it sets the resource smuggler_params and 'get' params as environment variables", func() {
 				Ω(command.LastCommandOutput).Should(ContainSubstring("param1=test"))
 				Ω(command.LastCommandOutput).Should(ContainSubstring("param2=true"))
 				Ω(command.LastCommandOutput).Should(ContainSubstring("param3=123"))
