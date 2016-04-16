@@ -28,8 +28,10 @@ func main() {
 	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
 
 	response, err := command.RunAction(dataDir, request)
+
 	// Print output to stderr
-	os.Stderr.Write([]byte(command.LastCommandCombinedOuput()))
+	os.Stderr.Write(command.LastCommandOutput)
+	os.Stderr.Write(command.LastCommandErr)
 
 	if err != nil {
 		utils.Fatal("running command", err, command.LastCommandExitStatus())

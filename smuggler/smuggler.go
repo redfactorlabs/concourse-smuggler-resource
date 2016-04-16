@@ -1,6 +1,8 @@
 package smuggler
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,9 +15,10 @@ import (
 )
 
 type SmugglerCommand struct {
-	lastCommand              *exec.Cmd
-	lastCommandCombinedOuput string
-	logger                   *log.Logger
+	lastCommand       *exec.Cmd
+	logger            *log.Logger
+	LastCommandOutput []byte
+	LastCommandErr    []byte
 }
 
 func NewSmugglerCommand(logger *log.Logger) *SmugglerCommand {
@@ -24,10 +27,6 @@ func NewSmugglerCommand(logger *log.Logger) *SmugglerCommand {
 
 func (command *SmugglerCommand) LastCommand() *exec.Cmd {
 	return command.lastCommand
-}
-
-func (command *SmugglerCommand) LastCommandCombinedOuput() string {
-	return command.lastCommandCombinedOuput
 }
 
 func (command *SmugglerCommand) LastCommandSuccess() bool {
@@ -42,7 +41,8 @@ func (command *SmugglerCommand) LastCommandExitStatus() int {
 	return waitStatus.ExitStatus()
 }
 
-func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]string) error {
+func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params map[string]string, jsonRequest []byte) error {
+
 	path := commandDefinition.Path
 	args := commandDefinition.Args
 
@@ -58,9 +58,17 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 	command.lastCommand = exec.Command(path, args...)
 	command.lastCommand.Env = params_env
 
-	output, err := command.lastCommand.CombinedOutput()
-	command.lastCommandCombinedOuput = string(output)
-	command.logger.Printf("[INFO] Output '%s'", command.LastCommandCombinedOuput())
+	command.lastCommand.Stdin = bytes.NewBuffer(jsonRequest)
+	stdout := new(bytes.Buffer)
+	command.lastCommand.Stdout = stdout
+	stderr := new(bytes.Buffer)
+	command.lastCommand.Stderr = stderr
+
+	err := command.lastCommand.Run()
+	command.LastCommandOutput, _ = ioutil.ReadAll(stdout)
+	command.LastCommandErr, _ = ioutil.ReadAll(stderr)
+	command.logger.Printf("[INFO] Output '%s'", command.LastCommandOutput)
+	command.logger.Printf("[INFO] Stderr '%s'", command.LastCommandErr)
 
 	return err
 }
@@ -68,7 +76,9 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 func (command *SmugglerCommand) RunAction(dataDir string, request ResourceRequest) (ResourceResponse, error) {
 	command.logger.Printf("[INFO] Running %s action", string(request.Type))
 
-	var response = ResourceResponse{Type: request.Type}
+	var response = ResourceResponse{
+		Type: request.Type,
+	}
 
 	if ok, message := request.Source.IsValid(); !ok {
 		return response, errors.New(message)
@@ -86,6 +96,7 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 	}
 	defer os.RemoveAll(outputDir)
 
+	// Prepare the params to send to the commands
 	params := copyMaps(request.Source.ExtraParams, request.Params)
 	params["ACTION"] = string(request.Type)
 	params["COMMAND"] = string(request.Type)
@@ -100,34 +111,28 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 		params["SOURCES_DIR"] = dataDir
 	}
 
-	err = command.Run(*commandDefinition, params)
+	jsonRequest, err := prepareJsonRequest(request)
 	if err != nil {
 		return response, err
 	}
 
-	versions, err := readVersions(filepath.Join(outputDir, "versions"))
+	err = command.Run(*commandDefinition, params, jsonRequest)
 	if err != nil {
 		return response, err
 	}
-	command.logger.Printf("[INFO] command reports versions '%q'", versions)
 
-	metadata, err := readMetadata(filepath.Join(outputDir, "metadata"))
+	// Try to get the response from a valid json from Stdout.
+	// If not, as files from the output directory
+	err = populateResponseFromStdoutAsJson(command.LastCommandOutput, &request, &response)
 	if err != nil {
-		return response, err
-	}
-	command.logger.Printf("[INFO] command reports metadata '%q'", metadata)
-
-	switch request.Type {
-	case "check":
-		response.Versions = versions
-	case "in", "out":
-		if len(versions) > 0 {
-			response.Version = versions[0]
-		} else {
-			response.Version = request.Version
+		err = populateResponseFromOutputDir(outputDir, &request, &response)
+		if err != nil {
+			return response, err
 		}
-		response.Metadata = metadata
 	}
+
+	command.logger.Printf("[INFO] command reports versions '%q'", response.Versions)
+	command.logger.Printf("[INFO] command reports metadata '%q'", response.Metadata)
 
 	return response, nil
 }
@@ -144,6 +149,55 @@ func copyMaps(maps ...map[string]string) map[string]string {
 		}
 	}
 	return result
+}
+
+func prepareJsonRequest(request ResourceRequest) ([]byte, error) {
+	jsonRequest, err := json.Marshal(request)
+	return jsonRequest, err
+}
+
+//
+// Tries to populate the response from the stdout
+//
+func populateResponseFromStdoutAsJson(stdout []byte, request *ResourceRequest, response *ResourceResponse) error {
+	var r ResourceResponse
+	err := json.Unmarshal(stdout, &r)
+	if err != nil {
+		return err
+	}
+	// Copy all the new values but the type to the response
+	r.Type = response.Type
+	*response = r
+	return nil
+}
+
+//
+// Tries to get the Request from the filesystem
+//
+func populateResponseFromOutputDir(outputDir string, request *ResourceRequest, response *ResourceResponse) error {
+	versions, err := readVersions(filepath.Join(outputDir, "versions"))
+	if err != nil {
+		return err
+	}
+
+	metadata, err := readMetadata(filepath.Join(outputDir, "metadata"))
+	if err != nil {
+		return err
+	}
+
+	switch response.Type {
+	case "check":
+		response.Versions = versions
+	case "in", "out":
+		if len(versions) > 0 {
+			response.Version = versions[0]
+		} else {
+			response.Version = request.Version
+		}
+		response.Metadata = metadata
+	}
+
+	return nil
 }
 
 func readVersions(versionsFile string) ([]Version, error) {

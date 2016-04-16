@@ -70,6 +70,10 @@ source:
  * [X] Document resource in README.md
  * [X] Add example Dockerfile
  * [X] Read config from `/opt/resource/config.yml`
+ * [X] Pass request down to the command
+ * [X] Read from stdout the response
+ * [ ] Generic request and response
+ * [ ] Filter the request to the command
  * [ ] Add some examples to README.md
  * [ ] Print output to console, at least on error.
  * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
