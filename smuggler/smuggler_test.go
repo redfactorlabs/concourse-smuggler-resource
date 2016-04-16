@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -22,7 +23,7 @@ var response ResourceResponse
 var command *SmugglerCommand
 var fixtureResourceName string
 var requestType RequestType
-var requestVersion Version
+var requestVersion json.RawMessage
 var err error
 var dataDir string
 
@@ -104,7 +105,7 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				Ω(command.LastCommandOutput).Should(ContainSubstring("version=1.2.3"))
 			})
 			It("it returns versions as list of strings", func() {
-				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+				vs := JsonStringToInterfaceList([]string{"1.2.3", "1.2.4"})
 				Ω(response.Versions).Should(BeEquivalentTo(vs))
 			})
 		})
@@ -144,11 +145,18 @@ var _ = Describe("SmugglerCommand Actions", func() {
 
 			It("the command writes the same request is in the destiation dir", func() {
 				var r ResourceRequest
+
 				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
 				Ω(err).ShouldNot(HaveOccurred())
-				err = json.Unmarshal(b, &r)
+
+				b_orig, err := json.Marshal(&request)
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(request).Should(BeEquivalentTo(r))
+				Ω(b).Should(MatchJSON(b_orig))
+
+				err = json.Unmarshal(b, &r)
+				r.Type = request.Type // This is not populated by Json unmarshal
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(r).Should(BeEquivalentTo(request))
 			})
 		})
 
@@ -164,7 +172,8 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
 			It("it returns the version ID", func() {
-				Ω(response.Version).Should(BeEquivalentTo(Version{VersionID: "3.2.1"}))
+				v := JsonStringToInterface("3.2.1")
+				Ω(response.Version).Should(Equal(v))
 			})
 		})
 
@@ -186,6 +195,35 @@ var _ = Describe("SmugglerCommand Actions", func() {
 			})
 		})
 	})
+	Context("when executing a task which handles json in params and versions", func() {
+		BeforeEach(func() {
+			requestType = InType
+			fixtureResourceName = "json_in_params_and_versions"
+		})
+		It("should get the json param as a serialized json", func() {
+			expectedJson := `{
+				"with": "keys",
+        "and": [ "other", "complex" ],
+        "structures": { "like": "this" }
+			}`
+
+			m := make(map[string]string)
+			for _, l := range strings.Split(string(command.LastCommandOutput), "\n") {
+				l := strings.SplitN(l, "=", 2)
+				if len(l) >= 2 {
+					k, v := l[0], l[1]
+					m[k] = v
+				}
+			}
+			Ω(m).Should(HaveKey("complex_param"))
+			Ω(m["complex_param"]).Should(MatchJSON(expectedJson))
+		})
+		It("should send the version param as a serialized json", func() {
+			m := response.Version.(map[string]interface{})
+			Ω(m).Should(HaveKey("ref"))
+		})
+	})
+
 })
 
 func CommonSmugglerTests() func() {
@@ -264,7 +302,8 @@ func InOutCommonSmugglerTests() func() {
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
 			It("it returns the version ID", func() {
-				Ω(response.Version).Should(BeEquivalentTo(Version{VersionID: "1.2.3"}))
+				v := JsonStringToInterface("1.2.3")
+				Ω(response.Version).Should(BeEquivalentTo(v))
 			})
 		})
 	}

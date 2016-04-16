@@ -2,6 +2,8 @@ package smuggler
 
 import (
 	"encoding/json"
+	//	"fmt"
+	//	"os"
 	"strings"
 )
 
@@ -58,10 +60,6 @@ func (commandDefinition CommandDefinition) IsDefined() bool {
 	return (commandDefinition.Name != "")
 }
 
-type Version struct {
-	VersionID string `json:"version_id,omitempty"`
-}
-
 type MetadataPair struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
@@ -80,10 +78,44 @@ const (
 )
 
 type ResourceRequest struct {
-	Source  Source            `json:"source"`
-	Version Version           `json:"version"`
+	Source  Source            `json:"source,omitempty"`
+	Version interface{}       `json:"version,omitempty"`
 	Params  map[string]string `json:"params,omitempty"`
-	Type    RequestType       `json:-`
+	Type    RequestType       `json:"-"`
+}
+
+// Check if the string is json itself, in which case is parsed and
+// return as interface{}. If not, returns the string itself
+func JsonStringToInterface(s string) interface{} {
+	var r interface{}
+	b := []byte(s)
+
+	err := json.Unmarshal(b, &r)
+	if err == nil {
+		return r
+	}
+	return s
+}
+
+func JsonStringToInterfaceList(sl []string) []interface{} {
+	vl := []interface{}{}
+	for _, s := range sl {
+		vl = append(vl, JsonStringToInterface(s))
+	}
+	return vl
+}
+
+func InterfaceToJsonString(v interface{}) string {
+	switch v.(type) {
+	case string:
+		return v.(string)
+	default:
+	}
+	s, err := json.Marshal(v)
+	if err != nil {
+		panic("Error converting version to json. Shouldn't happen :(")
+	}
+	return string(s)
 }
 
 func NewResourceRequestFromJson(jsonString string, requestType RequestType) (ResourceRequest, error) {
@@ -94,14 +126,14 @@ func NewResourceRequestFromJson(jsonString string, requestType RequestType) (Res
 }
 
 type ResourceResponse struct {
-	Version  Version        `json:"version,omitempty"`
-	Versions []Version      `json:"versions,omitempty"`
+	Version  interface{}    `json:"version,omitempty"`
+	Versions []interface{}  `json:"versions,omitempty"`
 	Metadata []MetadataPair `json:"metadata,omitempty"`
 	Type     RequestType    `json:"-"`
 }
 
 func (r *ResourceResponse) IsEmpty() bool {
-	return r.Version.VersionID == "" &&
+	return r.Version == interface{}(nil) &&
 		len(r.Versions) == 0 &&
 		len(r.Metadata) == 0
 }

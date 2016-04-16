@@ -103,10 +103,10 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 	params["OUTPUT_DIR"] = outputDir
 	switch request.Type {
 	case "check":
-		params["VERSION_ID"] = request.Version.VersionID
+		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
 	case "in":
 		params["DESTINATION_DIR"] = dataDir
-		params["VERSION_ID"] = request.Version.VersionID
+		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
 	case "out":
 		params["SOURCES_DIR"] = dataDir
 	}
@@ -200,13 +200,13 @@ func populateResponseFromOutputDir(outputDir string, request *ResourceRequest, r
 	return nil
 }
 
-func readVersions(versionsFile string) ([]Version, error) {
-	result := []Version{}
+func readVersions(versionsFile string) ([]interface{}, error) {
+	result := []interface{}{}
 	if versionLines, err := readAndTrimAllLines(versionsFile); err != nil {
 		return result, err
 	} else {
 		for _, l := range versionLines {
-			result = append(result, Version{VersionID: l})
+			result = append(result, JsonStringToInterface(l))
 		}
 	}
 	return result, nil
