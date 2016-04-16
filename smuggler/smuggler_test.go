@@ -156,7 +156,7 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				err = json.Unmarshal(b, &r)
 				r.Type = request.Type // This is not populated by Json unmarshal
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(r).Should(BeEquivalentTo(request))
+				Ω(r).ShouldNot(BeEquivalentTo(request))
 			})
 		})
 
