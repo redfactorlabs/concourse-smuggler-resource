@@ -50,7 +50,7 @@ resources:
       path: <command>
       args:
       - ...
-    extra_params:
+    smuggler_params:
     - key1: value1
     - key2: value2
     - ...
@@ -67,7 +67,7 @@ The `source` configuraton includes:
    dummy operation (Of course you always want to define at least one ;)).
 
 
- * `extra_params`: **Optional**. List of key-value pairs to pass to
+ * `smuggler_params`: **Optional**. List of key-value pairs to pass to
    all the commands.
 
    All these parameters will be passed as environment variables prefixed with
@@ -84,7 +84,7 @@ Will execute the command configured as `check`.
 Input of the script:
 
  * `SMUGGLER_<source_extra_param_name>`: Environment variables with the
-   prefixed source parameters defined in `extra_params`.
+   prefixed source parameters defined in `smuggler_params`.
  * `SMUGGLER_VERSION_ID`: Environment variable with the latest resource
    version. It will be a empty string in the first run.
  * `SMUGGLER_OUTPUT_DIR`: The directory path to write the resulting versions.
@@ -104,7 +104,7 @@ Input of the script:
  * `SMUGGLER_<param_name>`: Environment variables with the
    specific parameters passed to `get` or `put`.
  * `SMUGGLER_<source_extra_param_name>`: Environment variables with the
-   prefixed source parameters defined in `extra_params`.
+   prefixed source parameters defined in `smuggler_params`.
  * `SMUGGLER_OUTPUT_DIR`: The directory path to write the resulting version
    and metadata.
 

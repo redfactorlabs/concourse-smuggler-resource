@@ -8,8 +8,8 @@ import (
 )
 
 type Source struct {
-	Commands    []CommandDefinition `json:"commands,omitempty"`
-	ExtraParams map[string]string   `json:"extra_params,omitempty"`
+	Commands       []CommandDefinition `json:"commands,omitempty"`
+	SmugglerParams map[string]string   `json:"smuggler_params,omitempty"`
 }
 
 func (source Source) IsValid() (bool, string) {
@@ -27,7 +27,7 @@ func (source Source) FindCommand(name string) *CommandDefinition {
 
 // Merges two configuration Source.
 // * Commands: get merged by key 'name'. sourceB overrides sourceA
-// * ExtraParams: gets merged by key. sourceB overrides sourceA
+// * SmugglerParams: gets merged by key. sourceB overrides sourceA
 func MergeSource(sourceA, sourceB *Source) *Source {
 	var newSource Source
 
@@ -40,12 +40,12 @@ func MergeSource(sourceA, sourceB *Source) *Source {
 			newSource.Commands = append(newSource.Commands, command)
 		}
 	}
-	newSource.ExtraParams = make(map[string]string)
-	for k, v := range sourceA.ExtraParams {
-		newSource.ExtraParams[k] = v
+	newSource.SmugglerParams = make(map[string]string)
+	for k, v := range sourceA.SmugglerParams {
+		newSource.SmugglerParams[k] = v
 	}
-	for k, v := range sourceB.ExtraParams {
-		newSource.ExtraParams[k] = v
+	for k, v := range sourceB.SmugglerParams {
+		newSource.SmugglerParams[k] = v
 	}
 	return &newSource
 }
