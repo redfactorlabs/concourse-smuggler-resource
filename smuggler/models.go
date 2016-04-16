@@ -129,7 +129,7 @@ type ResourceResponse struct {
 	Version  interface{}    `json:"version,omitempty"`
 	Versions []interface{}  `json:"versions,omitempty"`
 	Metadata []MetadataPair `json:"metadata,omitempty"`
-	Type     RequestType    `json:-`
+	Type     RequestType    `json:"-"`
 }
 
 func (r *ResourceResponse) IsEmpty() bool {
