@@ -24,7 +24,7 @@ resources:
         echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
         echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/versions
         echo -e "\t 1.2.4  \n" >> ${SMUGGLER_OUTPUT_DIR}/versions
-        echo Command End
+        echo Command End 1>&2
     # In command
     - name: in
       path: bash
@@ -47,7 +47,7 @@ resources:
         echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
         echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
         echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo Command End
+        echo Command End 1>&2
     # Out command
     - name: out
       path: bash
@@ -68,7 +68,7 @@ resources:
         echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
         echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
         echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo Command End
+        echo Command End 1>&2
 
 - name: fail_command
   type: smuggler
@@ -104,6 +104,39 @@ resources:
   source:
     extra_params:
       param1: test
+
+- name: dump_request_from_stdin
+  type: smuggler
+  source:
+    commands:
+    - name: in
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        cat > ${SMUGGLER_DESTINATION_DIR}/stdin.json
+
+- name: write_response_to_stdout
+  type: smuggler
+  source:
+    commands:
+    - name: in
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        cat <<EOF
+        {
+          "version": { "version_id": "3.2.1" },
+          "metadata": [
+            { "name": "value_from_json", "value": "something" },
+            { "name": "other_value_from_json", "value": "otherthing" }
+          ]
+        }
+        EOF
+
 
 jobs:
   - name: a_job
