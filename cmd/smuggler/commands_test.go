@@ -85,10 +85,10 @@ var _ = Describe("smuggler commands", func() {
 				commandPath, request = prepareCommandCheck("complex_command")
 			})
 			It("outputs a valid json with a version", func() {
-				var response []Version
+				var response []interface{}
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+				vs := JsonStringToInterfaceList([]string{"1.2.3", "1.2.4"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -123,7 +123,7 @@ var _ = Describe("smuggler commands", func() {
 			})
 
 			It("returns empty version list", func() {
-				var response []Version
+				var response []interface{}
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(response).Should(BeEmpty())
@@ -198,7 +198,7 @@ var _ = Describe("smuggler commands", func() {
 			})
 
 			It("returns empty version list", func() {
-				var response []Version
+				var response []interface{}
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(response).Should(BeEmpty())
@@ -211,10 +211,10 @@ var _ = Describe("smuggler commands", func() {
 				commandPath, request = prepareCommandCheck("complex_command")
 			})
 			It("outputs a valid json with a version", func() {
-				var response []Version
+				var response []interface{}
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+				vs := JsonStringToInterfaceList([]string{"1.2.3", "1.2.4"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -243,10 +243,10 @@ var _ = Describe("smuggler commands", func() {
 			})
 
 			It("returns versions of the config file", func() {
-				var response []Version
+				var response []interface{}
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs := []Version{Version{VersionID: "4.5.6"}, Version{VersionID: "4.5.7"}}
+				vs := JsonStringToInterfaceList([]string{"4.5.6", "4.5.7"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -266,10 +266,10 @@ var _ = Describe("smuggler commands", func() {
 			})
 
 			It("returns versions of the definition", func() {
-				var response []Version
+				var response []interface{}
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+				vs := JsonStringToInterfaceList([]string{"1.2.3", "1.2.4"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -329,7 +329,8 @@ func InOutCommonSmugglerTests(session **gexec.Session) func() {
 			var response ResourceResponse
 			err := json.Unmarshal((*session).Out.Contents(), &response)
 			Ω(err).ShouldNot(HaveOccurred())
-			Ω(response.Version).Should(Equal(Version{VersionID: "1.2.3"}))
+			v := JsonStringToInterface("1.2.3")
+			Ω(response.Version).Should(Equal(v))
 		})
 		It("outputs a valid json with a version", func() {
 			var response ResourceResponse

@@ -22,7 +22,7 @@ var response ResourceResponse
 var command *SmugglerCommand
 var fixtureResourceName string
 var requestType RequestType
-var requestVersion Version
+var requestVersion json.RawMessage
 var err error
 var dataDir string
 
@@ -104,7 +104,7 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				Ω(command.LastCommandOutput).Should(ContainSubstring("version=1.2.3"))
 			})
 			It("it returns versions as list of strings", func() {
-				vs := []Version{Version{VersionID: "1.2.3"}, Version{VersionID: "1.2.4"}}
+				vs := JsonStringToInterfaceList([]string{"1.2.3", "1.2.4"})
 				Ω(response.Versions).Should(BeEquivalentTo(vs))
 			})
 		})
@@ -144,11 +144,18 @@ var _ = Describe("SmugglerCommand Actions", func() {
 
 			It("the command writes the same request is in the destiation dir", func() {
 				var r ResourceRequest
+
 				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
 				Ω(err).ShouldNot(HaveOccurred())
-				err = json.Unmarshal(b, &r)
+
+				b_orig, err := json.Marshal(&request)
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(request).Should(BeEquivalentTo(r))
+				Ω(b).Should(MatchJSON(b_orig))
+
+				err = json.Unmarshal(b, &r)
+				r.Type = request.Type // This is not populated by Json unmarshal
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(r).Should(BeEquivalentTo(request))
 			})
 		})
 
@@ -164,7 +171,8 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
 			It("it returns the version ID", func() {
-				Ω(response.Version).Should(BeEquivalentTo(Version{VersionID: "3.2.1"}))
+				v := JsonStringToInterface("3.2.1")
+				Ω(response.Version).Should(Equal(v))
 			})
 		})
 
@@ -264,7 +272,8 @@ func InOutCommonSmugglerTests() func() {
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
 			It("it returns the version ID", func() {
-				Ω(response.Version).Should(BeEquivalentTo(Version{VersionID: "1.2.3"}))
+				v := JsonStringToInterface("1.2.3")
+				Ω(response.Version).Should(BeEquivalentTo(v))
 			})
 		})
 	}

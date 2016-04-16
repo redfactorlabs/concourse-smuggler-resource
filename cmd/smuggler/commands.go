@@ -124,7 +124,7 @@ func outputResponse(response smuggler.ResourceResponse) {
 	}
 }
 
-func outputResponseCheck(response []smuggler.Version) {
+func outputResponseCheck(response []interface{}) {
 	if err := json.NewEncoder(os.Stdout).Encode(response); err != nil {
 		utils.Panic("writing response to stdout: %s", err)
 	}
