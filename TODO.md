@@ -73,6 +73,7 @@ source:
  * [X] Pass request down to the command
  * [X] Read from stdout the response
  * [X] Generic request and response
+ * [ ] ... test the flatten params, filtering, etc. (last 2x commits)
  * [ ] Filter the request to the command
  * [ ] Add some examples to README.md
  * [ ] Optional redirect all output to stderr.

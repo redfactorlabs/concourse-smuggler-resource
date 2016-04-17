@@ -14,10 +14,12 @@ import (
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
-var manifest = Fixture("../fixtures/pipeline.yml")
+var pipeline_yml = Fixture("../fixtures/pipeline.yml")
+var pipeline = NewPipeline(pipeline_yml)
+
 var logger = log.New(GinkgoWriter, "smuggler: ", log.Lmicroseconds)
 
-var request ResourceRequest
+var request *ResourceRequest
 var response ResourceResponse
 var command *SmugglerCommand
 var fixtureResourceName string
@@ -29,7 +31,7 @@ var dataDir string
 var _ = Describe("Check Command basic tests", func() {
 	Context("when given a basic config from a structure", func() {
 		request := ResourceRequest{
-			Source: Source{
+			Source: SmugglerSource{
 				Commands: []CommandDefinition{
 					CommandDefinition{
 						Name: "check",
@@ -64,10 +66,10 @@ var _ = Describe("Check Command basic tests", func() {
 		}`
 
 		BeforeEach(func() {
-			request, err = NewResourceRequestFromJson(requestJson, CheckType)
+			request, err = NewResourceRequest(CheckType, requestJson)
 			Ω(err).ShouldNot(HaveOccurred())
 			command = NewSmugglerCommand(logger)
-			response, err = command.RunAction("", request)
+			response, err = command.RunAction("", *request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
@@ -83,10 +85,15 @@ var _ = Describe("SmugglerCommand Actions", func() {
 		dataDir = "/some/path"
 	})
 	JustBeforeEach(func() {
-		request, err = GetResourceRequestFromYamlManifest(requestType, manifest, fixtureResourceName, "a_job")
+		var requestJson string
+		requestJson, err = pipeline.JsonRequest(requestType, fixtureResourceName, "a_job", "1.2.3")
 		Ω(err).ShouldNot(HaveOccurred())
+
+		request, err = NewResourceRequest(requestType, requestJson)
+		Ω(err).ShouldNot(HaveOccurred())
+
 		command = NewSmugglerCommand(logger)
-		response, err = command.RunAction(dataDir, request)
+		response, err = command.RunAction(dataDir, *request)
 	})
 
 	Context("when calling action 'check'", func() {
@@ -143,8 +150,6 @@ var _ = Describe("SmugglerCommand Actions", func() {
 			})
 
 			It("the command writes the same request is in the destiation dir", func() {
-				var r ResourceRequest
-
 				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
 				Ω(err).ShouldNot(HaveOccurred())
 
@@ -152,10 +157,9 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(b).Should(MatchJSON(b_orig))
 
-				err = json.Unmarshal(b, &r)
-				r.Type = request.Type // This is not populated by Json unmarshal
+				r, err := NewResourceRequest(request.Type, string(b))
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(r).ShouldNot(BeEquivalentTo(request))
+				Ω(r).Should(BeEquivalentTo(request))
 			})
 		})
 

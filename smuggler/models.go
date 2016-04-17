@@ -2,21 +2,15 @@ package smuggler
 
 import (
 	"encoding/json"
-	//	"fmt"
-	//	"os"
-	"strings"
 )
 
-type Source struct {
+type SmugglerSource struct {
 	Commands       []CommandDefinition    `json:"commands,omitempty"`
 	SmugglerParams map[string]interface{} `json:"smuggler_params,omitempty"`
+	ExtraParams    map[string]interface{} `json:"-"`
 }
 
-func (source Source) IsValid() (bool, string) {
-	return true, ""
-}
-
-func (source Source) FindCommand(name string) *CommandDefinition {
+func (source SmugglerSource) FindCommand(name string) *CommandDefinition {
 	for _, command := range source.Commands {
 		if command.Name == name {
 			return &command
@@ -25,11 +19,11 @@ func (source Source) FindCommand(name string) *CommandDefinition {
 	return nil
 }
 
-// Merges two configuration Source.
+// Merges two configuration Sources
 // * Commands: get merged by key 'name'. sourceB overrides sourceA
 // * SmugglerParams: gets merged by key. sourceB overrides sourceA
-func MergeSource(sourceA, sourceB *Source) *Source {
-	var newSource Source
+func MergeSource(sourceA, sourceB *SmugglerSource) *SmugglerSource {
+	var newSource SmugglerSource
 
 	newSource.Commands = make([]CommandDefinition, 0, 6)
 	for _, command := range sourceB.Commands {
@@ -46,6 +40,13 @@ func MergeSource(sourceA, sourceB *Source) *Source {
 	}
 	for k, v := range sourceB.SmugglerParams {
 		newSource.SmugglerParams[k] = v
+	}
+	newSource.ExtraParams = make(map[string]interface{})
+	for k, v := range sourceA.ExtraParams {
+		newSource.ExtraParams[k] = v
+	}
+	for k, v := range sourceB.ExtraParams {
+		newSource.ExtraParams[k] = v
 	}
 	return &newSource
 }
@@ -77,52 +78,56 @@ const (
 	OutType   RequestType = "out"
 )
 
-type ResourceRequest struct {
-	Source  Source                 `json:"source,omitempty"`
+type RawResourceRequest struct {
+	Source  map[string]interface{} `json:"source,omitempty"`
 	Version interface{}            `json:"version,omitempty"`
 	Params  map[string]interface{} `json:"params,omitempty"`
-	Type    RequestType            `json:"-"`
 }
 
-// Check if the string is json itself, in which case is parsed and
-// return as interface{}. If not, returns the string itself
-func JsonStringToInterface(s string) interface{} {
-	var r interface{}
-	b := []byte(s)
-
-	err := json.Unmarshal(b, &r)
-	if err == nil {
-		return r
-	}
-	return s
+type ResourceRequest struct {
+	Type            RequestType            `json:"-"`
+	Source          SmugglerSource         `json:"source,omitempty"`
+	Version         interface{}            `json:"version,omitempty"`
+	Params          map[string]interface{} `json:"params,omitempty"`
+	OrigRequest     RawResourceRequest     `json:"-"`
+	FilteredRequest RawResourceRequest     `json:"-"`
 }
 
-func JsonStringToInterfaceList(sl []string) []interface{} {
-	vl := []interface{}{}
-	for _, s := range sl {
-		vl = append(vl, JsonStringToInterface(s))
+func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRequest, error) {
+	request := ResourceRequest{
+		Type: requestType,
 	}
-	return vl
-}
 
-func InterfaceToJsonString(v interface{}) string {
-	switch v.(type) {
-	case string:
-		return v.(string)
-	default:
-	}
-	s, err := json.Marshal(v)
+	err := json.Unmarshal([]byte(jsonString), &request)
 	if err != nil {
-		panic("Error converting version to json. Shouldn't happen :(")
+		return nil, err
 	}
-	return string(s)
+
+	// Set  the raw original request
+	rawRequest := RawResourceRequest{}
+	err = json.Unmarshal([]byte(jsonString), &rawRequest)
+	if err != nil {
+		return nil, err
+	}
+	request.OrigRequest = rawRequest
+
+	// Create a filtered version of the request without the smuggler config
+	filteredRequest := RawResourceRequest{}
+	err = json.Unmarshal([]byte(jsonString), &filteredRequest)
+	delete(filteredRequest.Source, "commands")
+	delete(filteredRequest.Source, "smuggler_params")
+	delete(filteredRequest.Params, "smuggler_params")
+
+	request.FilteredRequest = filteredRequest
+
+	// The fistered request source is the extra params for smuggler
+	request.Source.ExtraParams = request.FilteredRequest.Source
+
+	return &request, nil
 }
 
-func NewResourceRequestFromJson(jsonString string, requestType RequestType) (ResourceRequest, error) {
-	request := ResourceRequest{}
-	err := json.NewDecoder(strings.NewReader(jsonString)).Decode(&request)
-	request.Type = requestType
-	return request, err
+func (request *ResourceRequest) ToJson() ([]byte, error) {
+	return json.Marshal(request)
 }
 
 type ResourceResponse struct {

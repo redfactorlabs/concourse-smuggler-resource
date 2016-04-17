@@ -21,7 +21,8 @@ import (
 	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 )
 
-var manifest = Fixture("../../fixtures/pipeline.yml")
+var pipeline_yml = Fixture("../../fixtures/pipeline.yml")
+var pipeline = NewPipeline(pipeline_yml)
 var err error
 
 var _ = Describe("smuggler commands", func() {
@@ -32,7 +33,7 @@ var _ = Describe("smuggler commands", func() {
 		commandPath        string
 		dataDir            string
 		expectedExitStatus int
-		request            ResourceRequest
+		request            *ResourceRequest
 	)
 
 	BeforeEach(func() {
@@ -288,37 +289,46 @@ var _ = Describe("smuggler commands", func() {
 
 })
 
-func prepareCommandCheck(manifestDefinitionName string) (string, ResourceRequest) {
+func getRequest(t RequestType, resourceName string) *ResourceRequest {
+	requestJson, err := pipeline.JsonRequest(t, resourceName, "a_job", "1.2.3")
+	Ω(err).ShouldNot(HaveOccurred())
+
+	fmt.Fprintf(GinkgoWriter, "%s\n", requestJson)
+
+	request, err := NewResourceRequest(t, requestJson)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	return request
+}
+
+func prepareCommandCheck(resourceName string) (string, *ResourceRequest) {
 	commandPath := checkPath
 
-	request, err := GetResourceRequestFromYamlManifest(CheckType, manifest, manifestDefinitionName, "a_job")
-	Ω(err).ShouldNot(HaveOccurred())
+	request := getRequest(CheckType, resourceName)
 
 	return commandPath, request
 }
 
-func prepareCommandIn(manifestDefinitionName string) (string, string, ResourceRequest) {
+func prepareCommandIn(resourceName string) (string, string, *ResourceRequest) {
 	commandPath := inPath
 
 	tmpPath, err := ioutil.TempDir("", "in_command")
 	Ω(err).ShouldNot(HaveOccurred())
 	dataDir := filepath.Join(tmpPath, "destination")
 
-	request, err := GetResourceRequestFromYamlManifest(InType, manifest, manifestDefinitionName, "a_job")
-	Ω(err).ShouldNot(HaveOccurred())
+	request := getRequest(InType, resourceName)
 
 	return commandPath, dataDir, request
 }
 
-func prepareCommandOut(manifestDefinitionName string) (string, string, ResourceRequest) {
+func prepareCommandOut(resourceName string) (string, string, *ResourceRequest) {
 	commandPath := outPath
 
 	tmpPath, err := ioutil.TempDir("", "in_command")
 	Ω(err).ShouldNot(HaveOccurred())
 	dataDir := filepath.Join(tmpPath, "destination")
 
-	request, err := GetResourceRequestFromYamlManifest(OutType, manifest, manifestDefinitionName, "a_job")
-	Ω(err).ShouldNot(HaveOccurred())
+	request := getRequest(OutType, resourceName)
 
 	return commandPath, dataDir, request
 }
