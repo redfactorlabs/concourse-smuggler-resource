@@ -70,7 +70,11 @@ func (pipeline *Pipeline) JsonRequest(requestType RequestType, resource_name str
 	}
 
 	if requestType == InType || requestType == CheckType {
-		request.Version = JsonStringToInterface(version)
+		v, err := NewVersion(version)
+		if err != nil {
+			return "", fmt.Errorf("Failed encoding version %q: %+v", err, request)
+		}
+		request.Version = *v
 	}
 
 	b, err := json.Marshal(request)

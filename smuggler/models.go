@@ -99,7 +99,7 @@ const (
 
 type RawResourceRequest struct {
 	Source  map[string]interface{} `json:"source,omitempty"`
-	Version interface{}            `json:"version,omitempty"`
+	Version Version                `json:"version,omitempty"`
 	Params  map[string]interface{} `json:"params,omitempty"`
 }
 
@@ -115,10 +115,52 @@ func NewRawResourceRequest(jsonString string) (*RawResourceRequest, error) {
 type ResourceRequest struct {
 	Type            RequestType         `json:"-"`
 	Source          SmugglerSource      `json:"source,omitempty"`
-	Version         interface{}         `json:"version,omitempty"`
+	Version         Version             `json:"version,omitempty"`
 	Params          TaskParams          `json:"params,omitempty"`
 	OrigRequest     *RawResourceRequest `json:"-"`
 	FilteredRequest *RawResourceRequest `json:"-"`
+}
+
+type Version map[string]string
+
+func (v Version) ToString() string {
+	if id, ok := v["ref"]; ok {
+		return id
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		panic("error marshalling version")
+	}
+	return string(b)
+}
+
+func NewVersion(s string) (*Version, error) {
+	var v Version
+
+	err := json.Unmarshal([]byte(s), &v)
+	if err != nil {
+		switch err.(type) {
+		case *json.SyntaxError:
+			v = make(Version)
+			v["ref"] = s
+		default:
+			return nil, err
+		}
+	}
+	return &v, nil
+}
+
+func NewVersions(sl []string) ([]Version, error) {
+	var vs []Version
+	vs = make([]Version, 0, len(sl))
+	for _, s := range sl {
+		v, err := NewVersion(s)
+		if err != nil {
+			return vs, err
+		}
+		vs = append(vs, *v)
+	}
+	return vs, nil
 }
 
 type TaskParams struct {
@@ -180,14 +222,14 @@ func (request *ResourceRequest) ToJson() ([]byte, error) {
 }
 
 type ResourceResponse struct {
-	Version  interface{}    `json:"version,omitempty"`
-	Versions []interface{}  `json:"versions,omitempty"`
+	Version  Version        `json:"version,omitempty"`
+	Versions []Version      `json:"versions,omitempty"`
 	Metadata []MetadataPair `json:"metadata,omitempty"`
 	Type     RequestType    `json:"-"`
 }
 
 func (r *ResourceResponse) IsEmpty() bool {
-	return r.Version == interface{}(nil) &&
+	return len(r.Version) == 0 &&
 		len(r.Versions) == 0 &&
 		len(r.Metadata) == 0
 }
