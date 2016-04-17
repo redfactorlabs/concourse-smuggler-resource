@@ -4,6 +4,5 @@ set -e
 
 test -z "$(go fmt ./...)"
 
-godep go test ./cmd/smuggler -v $@
 
-godep go test ./smuggler -v $@
+godep go test ./smuggler ./cmd/smuggler -v $@
