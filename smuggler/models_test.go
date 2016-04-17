@@ -14,7 +14,7 @@ var _ = Describe("ResourceRequest", func() {
 
 	It("Decoding and encoding a string with json results in the same string", func() {
 		var r *ResourceRequest
-		s := `{"source":{"commands":[{"name":"in","path":"env"}]},"version":"1.2.3","params":{}}`
+		s := `{"source":{"commands":{"in":{"path":"env"}}},"version":"1.2.3","params":{}}`
 
 		r, err := NewResourceRequest(InType, s)
 		Ω(err).ShouldNot(HaveOccurred())

@@ -11,25 +11,24 @@ resources:
   type: smuggler
   source:
     commands:
-    - name: check
-      path: sh
-      args:
-      - -e
-      - -u
-      - -c
-      - |
-        echo constant > ${SMUGGLER_OUTPUT_DIR}/versions
-    - name: in
-      path: sh
-      args:
-      - -e
-      - -u
-      - -c
-      - |
-        ssh-keygen -f ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} -N ''
-        cat ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} |\
-          shasum | cut -f 1 -d " " > ${SMUGGLER_OUTPUT_DIR}/versions
-
+      check:
+        path: sh
+        args:
+        - -e
+        - -u
+        - -c
+        - |
+          echo constant > ${SMUGGLER_OUTPUT_DIR}/versions
+      in:
+        path: sh
+        args:
+        - -e
+        - -u
+        - -c
+        - |
+          ssh-keygen -f ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} -N ''
+          cat ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} |\
+            shasum | cut -f 1 -d " " > ${SMUGGLER_OUTPUT_DIR}/versions
 
 jobs:
 - name: do_something_with_ssh

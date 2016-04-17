@@ -7,95 +7,95 @@ resources:
       param2: true
       param3: 123
     commands:
-    # Check command
-    - name: check
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo Command Start
-        echo "action=${SMUGGLER_ACTION}"
-        echo "command=${SMUGGLER_COMMAND}"
-        echo "version=${SMUGGLER_VERSION_ID}"
-        echo "param1=${SMUGGLER_param1}"
-        echo "param2=${SMUGGLER_param2}"
-        echo "param3=${SMUGGLER_param3}"
-        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
-        echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/versions
-        echo -e "\t 1.2.4  \n" >> ${SMUGGLER_OUTPUT_DIR}/versions
-        echo Command End 1>&2
-    # In command
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo Command Start
-        echo "version=${SMUGGLER_VERSION_ID}"
-        echo "destinationDir=${SMUGGLER_DESTINATION_DIR}"
-        echo "action=${SMUGGLER_ACTION}"
-        echo "command=${SMUGGLER_COMMAND}"
-        echo "param1=${SMUGGLER_param1}"
-        echo "param2=${SMUGGLER_param2}"
-        echo "param3=${SMUGGLER_param3}"
-        echo "param4=${SMUGGLER_param4}"
-        echo "param5=${SMUGGLER_param5}"
-        echo "param6=${SMUGGLER_param6}"
-        echo "action=${SMUGGLER_ACTION}"
-        echo "action=${SMUGGLER_COMMAND}"
-        echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo Command End 1>&2
-    # Out command
-    - name: out
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo Command Start
-        echo "sourcesDir=$SMUGGLER_SOURCES_DIR"
-        echo "action=${SMUGGLER_ACTION}"
-        echo "command=${SMUGGLER_COMMAND}"
-        echo "param1=${SMUGGLER_param1}"
-        echo "param2=${SMUGGLER_param2}"
-        echo "param3=${SMUGGLER_param3}"
-        echo "param4=${SMUGGLER_param4}"
-        echo "param5=${SMUGGLER_param5}"
-        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
-        echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
-        echo Command End 1>&2
+      # Check command
+      check:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo Command Start
+          echo "action=${SMUGGLER_ACTION}"
+          echo "command=${SMUGGLER_COMMAND}"
+          echo "version=${SMUGGLER_VERSION_ID}"
+          echo "param1=${SMUGGLER_param1}"
+          echo "param2=${SMUGGLER_param2}"
+          echo "param3=${SMUGGLER_param3}"
+          echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+          echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/versions
+          echo -e "\t 1.2.4  \n" >> ${SMUGGLER_OUTPUT_DIR}/versions
+          echo Command End 1>&2
+      # In command
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo Command Start
+          echo "version=${SMUGGLER_VERSION_ID}"
+          echo "destinationDir=${SMUGGLER_DESTINATION_DIR}"
+          echo "action=${SMUGGLER_ACTION}"
+          echo "command=${SMUGGLER_COMMAND}"
+          echo "param1=${SMUGGLER_param1}"
+          echo "param2=${SMUGGLER_param2}"
+          echo "param3=${SMUGGLER_param3}"
+          echo "param4=${SMUGGLER_param4}"
+          echo "param5=${SMUGGLER_param5}"
+          echo "param6=${SMUGGLER_param6}"
+          echo "action=${SMUGGLER_ACTION}"
+          echo "action=${SMUGGLER_COMMAND}"
+          echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
+          echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
+          echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
+          echo Command End 1>&2
+      # Out command
+      out:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo Command Start
+          echo "sourcesDir=$SMUGGLER_SOURCES_DIR"
+          echo "action=${SMUGGLER_ACTION}"
+          echo "command=${SMUGGLER_COMMAND}"
+          echo "param1=${SMUGGLER_param1}"
+          echo "param2=${SMUGGLER_param2}"
+          echo "param3=${SMUGGLER_param3}"
+          echo "param4=${SMUGGLER_param4}"
+          echo "param5=${SMUGGLER_param5}"
+          echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+          echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
+          echo -e "\n   " >> ${SMUGGLER_OUTPUT_DIR}/metadata
+          echo -e "\t value_2=2  \n" >> ${SMUGGLER_OUTPUT_DIR}/metadata
+          echo Command End 1>&2
 
 - name: fail_command
   type: smuggler
   source:
     commands:
-    - name: check
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        exit 2
-    - name: out
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        exit 2
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        exit 2
+      check:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          exit 2
+      out:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          exit 2
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          exit 2
 
 - name: dummy_command
   type: smuggler
@@ -113,13 +113,13 @@ resources:
       smuggler_param1: smuggler_val1
     non_smuggler_param1: non_smuggler_val1
     commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        cat > ${SMUGGLER_DESTINATION_DIR}/stdin.json
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          cat > ${SMUGGLER_DESTINATION_DIR}/stdin.json
 
 - name: dump_filtered_request_from_stdin
   type: smuggler
@@ -129,47 +129,47 @@ resources:
     non_smuggler_param1: non_smuggler_val1
     filter_raw_request: true
     commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        cat > ${SMUGGLER_DESTINATION_DIR}/stdin.json
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          cat > ${SMUGGLER_DESTINATION_DIR}/stdin.json
 
 
 - name: write_response_to_stdout
   type: smuggler
   source:
     commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        cat <<EOF
-        {
-          "version": "3.2.1",
-          "metadata": [
-            { "name": "value_from_json", "value": "something" },
-            { "name": "other_value_from_json", "value": "otherthing" }
-          ]
-        }
-        EOF
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          cat <<EOF
+          {
+            "version": "3.2.1",
+            "metadata": [
+              { "name": "value_from_json", "value": "something" },
+              { "name": "other_value_from_json", "value": "otherthing" }
+            ]
+          }
+          EOF
 
 - name: json_in_params_and_versions
   type: smuggler
   source:
     commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo "complex_param=$SMUGGLER_complex_param"
-        echo '{"ref": "someid"}' > ${SMUGGLER_OUTPUT_DIR}/versions
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo "complex_param=$SMUGGLER_complex_param"
+          echo '{"ref": "someid"}' > ${SMUGGLER_OUTPUT_DIR}/versions
     smuggler_params:
       complex_param:
         with: "keys"
@@ -183,21 +183,21 @@ resources:
       smuggler_param1: smuggler_val1
     non_smuggler_param1: non_smuggler_val1
     commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo Command Start
-        echo "action=${SMUGGLER_ACTION}"
-        echo "command=${SMUGGLER_COMMAND}"
-        echo "smuggler_param1=${SMUGGLER_smuggler_param1}"
-        echo "non_smuggler_param1=${SMUGGLER_non_smuggler_param1}"
-        echo "smuggler_param2=${SMUGGLER_smuggler_param2}"
-        echo "non_smuggler_param2=${SMUGGLER_non_smuggler_param2}"
-        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
-        echo Command End 1>&2
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo Command Start
+          echo "action=${SMUGGLER_ACTION}"
+          echo "command=${SMUGGLER_COMMAND}"
+          echo "smuggler_param1=${SMUGGLER_smuggler_param1}"
+          echo "non_smuggler_param1=${SMUGGLER_non_smuggler_param1}"
+          echo "smuggler_param2=${SMUGGLER_smuggler_param2}"
+          echo "non_smuggler_param2=${SMUGGLER_non_smuggler_param2}"
+          echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+          echo Command End 1>&2
 
 # Like mix_params without smuggler config
 - name: mix_params_filtered
@@ -212,15 +212,15 @@ resources:
     in_command: "echo Inline command for $SMUGGLER_COMMAND"
     out_command: "echo Inline command for $SMUGGLER_COMMAND"
     commands:
-    - name: check
-      path: "echo"
-      args: ["this should not be executed"]
-    - name: in
-      path: "echo"
-      args: ["this should not be executed"]
-    - name: out
-      path: "echo"
-      args: ["this should not be executed"]
+      check:
+        path: "echo"
+        args: ["this should not be executed"]
+      in:
+        path: "echo"
+        args: ["this should not be executed"]
+      out:
+        path: "echo"
+        args: ["this should not be executed"]
 
 - name: override_params
   type: smuggler
@@ -234,19 +234,19 @@ resources:
     param2: source
     param3: source
     commands:
-    - name: in
-      path: bash
-      args:
-      - -e
-      - -c
-      - |
-        echo Command Start
-        echo "smuggler_param1=$SMUGGLER_param1"
-        echo "smuggler_param2=$SMUGGLER_param2"
-        echo "smuggler_param3=$SMUGGLER_param3"
-        echo "smuggler_param4=$SMUGGLER_param4"
-        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
-        echo Command End 1>&2
+      in:
+        path: bash
+        args:
+        - -e
+        - -c
+        - |
+          echo Command Start
+          echo "smuggler_param1=$SMUGGLER_param1"
+          echo "smuggler_param2=$SMUGGLER_param2"
+          echo "smuggler_param3=$SMUGGLER_param3"
+          echo "smuggler_param4=$SMUGGLER_param4"
+          echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+          echo Command End 1>&2
 
 jobs:
   - name: a_job

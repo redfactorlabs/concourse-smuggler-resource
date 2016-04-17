@@ -9,13 +9,13 @@ import (
 )
 
 type SmugglerSource struct {
-	CheckCommand     string                 `json:"check_command,omitempty"`
-	InCommand        string                 `json:"in_command,omitempty"`
-	OutCommand       string                 `json:"out_command,omitempty"`
-	Commands         []CommandDefinition    `json:"commands,omitempty"`
-	FilterRawRequest bool                   `json:"filter_raw_request,omitempty"`
-	SmugglerParams   map[string]interface{} `json:"smuggler_params,omitempty"`
-	ExtraParams      map[string]interface{} `json:"-"`
+	CheckCommand     string                       `json:"check_command,omitempty"`
+	InCommand        string                       `json:"in_command,omitempty"`
+	OutCommand       string                       `json:"out_command,omitempty"`
+	Commands         map[string]CommandDefinition `json:"commands,omitempty"`
+	FilterRawRequest bool                         `json:"filter_raw_request,omitempty"`
+	SmugglerParams   map[string]interface{}       `json:"smuggler_params,omitempty"`
+	ExtraParams      map[string]interface{}       `json:"-"`
 }
 
 func WrapCommandWithShell(name string, commandLine string) *CommandDefinition {
@@ -23,7 +23,6 @@ func WrapCommandWithShell(name string, commandLine string) *CommandDefinition {
 	shellPath, err := exec.LookPath("bash")
 	if err == nil {
 		return &CommandDefinition{
-			Name: name,
 			Path: shellPath,
 			Args: []string{"-e", "-u", "-o", "pipefail", "-c", commandLine},
 		}
@@ -32,7 +31,6 @@ func WrapCommandWithShell(name string, commandLine string) *CommandDefinition {
 	shellPath, err = exec.LookPath("sh")
 	if err == nil {
 		return &CommandDefinition{
-			Name: name,
 			Path: shellPath,
 			Args: []string{"-e", "-u", "-o", "pipefail", "-c", commandLine},
 		}
@@ -41,7 +39,6 @@ func WrapCommandWithShell(name string, commandLine string) *CommandDefinition {
 	// In last case, use the command itself
 	l := strings.Split(commandLine, ",")
 	return &CommandDefinition{
-		Name: name,
 		Path: l[0],
 		Args: l[1:],
 	}
@@ -57,10 +54,8 @@ func (source SmugglerSource) FindCommand(name string) *CommandDefinition {
 	if name == "out" && source.OutCommand != "" {
 		return WrapCommandWithShell(name, source.OutCommand)
 	}
-	for _, command := range source.Commands {
-		if command.Name == name {
-			return &command
-		}
+	if cmd, ok := source.Commands[name]; ok {
+		return &cmd
 	}
 	return nil
 }
@@ -98,13 +93,12 @@ func MergeSource(sourceA, sourceB *SmugglerSource) *SmugglerSource {
 }
 
 type CommandDefinition struct {
-	Name string   `json:"name"`
 	Path string   `json:"path"`
 	Args []string `json:"args,omitempty"`
 }
 
 func (commandDefinition CommandDefinition) IsDefined() bool {
-	return (commandDefinition.Name != "")
+	return (commandDefinition.Path != "")
 }
 
 type MetadataPair struct {

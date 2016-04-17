@@ -3,34 +3,34 @@
 smuggler_params:
   config_param1: param_in_config
 commands:
-- name: check
-  path: bash
-  args:
-  - -e
-  - -c
-  - |
-    echo "command check from config file"
-    echo "param1=${SMUGGLER_param1:-undef}"
-    echo "config_param1=${SMUGGLER_config_param1:-undef}"
-    echo "4.5.6" >> ${SMUGGLER_OUTPUT_DIR}/versions
-    echo "4.5.7" >> ${SMUGGLER_OUTPUT_DIR}/versions
-- name: in
-  path: bash
-  args:
-  - -e
-  - -c
-  - |
-    echo "command in from config file"
-    echo "param1=${SMUGGLER_param1:-undef}"
-    echo "config_param1=${SMUGGLER_config_param1:-undef}"
-    echo "4.5.6" > ${SMUGGLER_OUTPUT_DIR}/versions
-- name: out
-  path: bash
-  args:
-  - -e
-  - -c
-  - |
-    echo "command out from config file"
-    echo "param1=${SMUGGLER_param1:-undef}"
-    echo "config_param1=${SMUGGLER_config_param1:-undef}"
+  check:
+    path: bash
+    args:
+    - -e
+    - -c
+    - |
+      echo "command check from config file"
+      echo "param1=${SMUGGLER_param1:-undef}"
+      echo "config_param1=${SMUGGLER_config_param1:-undef}"
+      echo "4.5.6" >> ${SMUGGLER_OUTPUT_DIR}/versions
+      echo "4.5.7" >> ${SMUGGLER_OUTPUT_DIR}/versions
+  in:
+    path: bash
+    args:
+    - -e
+    - -c
+    - |
+      echo "command in from config file"
+      echo "param1=${SMUGGLER_param1:-undef}"
+      echo "config_param1=${SMUGGLER_config_param1:-undef}"
+      echo "4.5.6" > ${SMUGGLER_OUTPUT_DIR}/versions
+  out:
+    path: bash
+    args:
+    - -e
+    - -c
+    - |
+      echo "command out from config file"
+      echo "param1=${SMUGGLER_param1:-undef}"
+      echo "config_param1=${SMUGGLER_config_param1:-undef}"
 

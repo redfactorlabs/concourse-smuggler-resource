@@ -36,9 +36,8 @@ var _ = Describe("Check Command basic tests", func() {
 	Context("when given a basic config from a structure", func() {
 		request := ResourceRequest{
 			Source: SmugglerSource{
-				Commands: []CommandDefinition{
-					CommandDefinition{
-						Name: "check",
+				Commands: map[string]CommandDefinition{
+					"check": CommandDefinition{
 						Path: "bash",
 						Args: []string{"-e", "-c", "echo basic echo test"},
 					},
@@ -58,13 +57,12 @@ var _ = Describe("Check Command basic tests", func() {
 	Context("when given a basic config from a json", func() {
 		requestJson := `{
 			"source": {
-				"commands": [
-					{
-						"name": "check",
+				"commands": {
+					"check": {
 						"path": "sh",
 						"args": [ "-e", "-c", "echo basic echo test" ]
 					}
-				]
+				}
 			},
 			"version": {}
 		}`

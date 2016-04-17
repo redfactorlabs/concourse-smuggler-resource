@@ -47,18 +47,18 @@ resources:
 
     # Multiline definition
     commands:
-    - name: check
-      path: <command>
-      args:
-      - ...
-    - name: in
-      path: <command>
-      args:
-      - ...
-    - name: out
-      path: <command>
-      args:
-      - ...
+      check:
+        path: <command>
+        args:
+        - ...
+      in:
+        path: <command>
+        args:
+        - ...
+      out:
+        path: <command>
+        args:
+        - ...
 
     filter_raw_request: true
 
@@ -108,7 +108,7 @@ The `source` configuraton includes:
 
    These definitions have precedence to the ones in `commands`.
 
- * `commands`: *Optional*. Long way to define commands.
+ * `commands`: *Optional*. Detailed way to define commands.
 
    Each command has a `path` and `args` similar to
    [concourse task `run` definition](https://concourse.ci/running-tasks.html#run)
@@ -222,7 +222,7 @@ You can smuggle even more if you use inline scripts included as
 in your command definition:
 
 ```
-- name: check
+check:
   path: sh
   args:
   # sh reads commands from next argument with -c
@@ -245,15 +245,15 @@ resources:
   type: smuggler
   source:
     commands:
-    - name: out
-      path: sh
-      path: <command>
-      args:
-      - -e
-      - -c
-      - |
-        ssh-keygen -f id_rsa -N ''
-        tar -cvzf $SMUGGLER_DESTINATION_DIR/id_rsa.tar.gz id_rsa id_rsa.tgz
+      out:
+        path: sh
+        path: <command>
+        args:
+        - -e
+        - -c
+        - |
+          ssh-keygen -f id_rsa -N ''
+          tar -cvzf $SMUGGLER_DESTINATION_DIR/id_rsa.tar.gz id_rsa id_rsa.tgz
 ```
  * `python`: TODO
    ```
@@ -303,51 +303,53 @@ For example, to use S3 to store generated keys with `ssh-keygen`:
     secret_access_key: SECRET
 
     commands:
-    - name: check
-      path: bash
-      args:
-      - -c
-      - -e
-      - |
-        if [ -z "$SMUGGLER_VERSION_ID" ] &&
-          # First time we will generate the key
-          echo "initial" > ${SMUGGLER_OUTPUT_DIR}/versions
-        else
-          /opt/resource/wrapped_resource/s3/check
-        fi
-    - name: in
-      path: bash
-      args:
-      - -c
-      - -e
-      - |
-        if [ "$SMUGGLER_VERSION_ID" == "initial" ] &&
-          # First time we will generate the key
-          ssh-keygen -f id_rsa -N ''
-          tar -czf ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file} id_rsa id_rsa.pub
+      check:
+        path: bash
+        args:
+        - -c
+        - -e
+        - |
+          if [ -z "$SMUGGLER_VERSION_ID" ] &&
+            # First time we will generate the key
+            echo "initial" > ${SMUGGLER_OUTPUT_DIR}/versions
+          else
+            /opt/resource/wrapped_resource/s3/check
+          fi
+      in:
+        path: bash
+        args:
+        - -c
+        - -e
+        - |
+          if [ "$SMUGGLER_VERSION_ID" == "initial" ] &&
+            # First time we will generate the key
+            ssh-keygen -f id_rsa -N ''
+            tar -czf ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file} id_rsa id_rsa.pub
 
-          # And the upload the key with an out command.
-          #
-          # The out command will read the "in" request from stdin and
-          # write a response to stdout both they are compatible
-          #
+            # And the upload the key with an out command.
+            #
+            # The out command will read the "in" request from stdin and
+            # write a response to stdout both they are compatible
+            #
+            /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
+          else
+            /opt/resource/wrapped_resource/s3/in ${SMUGGLER_DESTINATION_DIR}
+          fi
+      out:
+        path: bash
+        args:
+        - -c
+        - -e
+        - |
           /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
-        else
-          /opt/resource/wrapped_resource/s3/in ${SMUGGLER_DESTINATION_DIR}
-        fi
-    - name: out
-      path: bash
-      args:
-      - -c
-      - -e
-      - |
-        /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
 
 ```
 
-## Smuggler as framework for new resources
+## External config file
 
 TODO ... explain config.yml
+
+## Smuggler as framework for new resources
 
 ## Examples
 
