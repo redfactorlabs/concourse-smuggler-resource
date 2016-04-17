@@ -40,4 +40,31 @@ var _ = Describe("ResourceRequest", func() {
 
 		Ω(request.Source.ExtraParams).Should(HaveKey("non_smuggler_param1"))
 	})
+	It("populates the OrigRequest attribute", func() {
+		json, err := pipeline.JsonRequest(InType, "mix_params", "a_job", "1.2.3")
+		Ω(err).ShouldNot(HaveOccurred())
+
+		request, err := NewResourceRequest(InType, json)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		rawRequest, err := NewRawResourceRequest(json)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		Ω(request.OrigRequest).Should(BeEquivalentTo(rawRequest))
+	})
+	It("populates the FilteredRequest attribute with a RawRequest without smuggler config", func() {
+		json, err := pipeline.JsonRequest(InType, "mix_params", "a_job", "1.2.3")
+		Ω(err).ShouldNot(HaveOccurred())
+
+		request, err := NewResourceRequest(InType, json)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		rawJson, err := pipeline.JsonRequest(InType, "mix_params_filtered", "a_job", "1.2.3")
+		Ω(err).ShouldNot(HaveOccurred())
+
+		rawRequest, err := NewRawResourceRequest(rawJson)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		Ω(request.FilteredRequest).Should(BeEquivalentTo(rawRequest))
+	})
 })
