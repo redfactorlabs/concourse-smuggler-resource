@@ -21,8 +21,7 @@ func main() {
 	tempFileLogger := openSmugglerLog()
 
 	// Read request
-	request := smuggler.ResourceRequest{Type: requestType}
-	inputRequest(&request)
+	request := inputRequest(requestType)
 
 	// Execute command
 	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
@@ -82,15 +81,22 @@ func openSmugglerLog() *utils.TempFileLogger {
 }
 
 // Read input request, merged with the configuration file
-func inputRequest(request *smuggler.ResourceRequest) {
-	if err := json.NewDecoder(os.Stdin).Decode(request); err != nil {
+func inputRequest(requestType smuggler.RequestType) *smuggler.ResourceRequest {
+	input, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
 		utils.Panic("reading request from stdin", err)
+	}
+	request, err := smuggler.NewResourceRequest(requestType, string(input))
+	if err != nil {
+		utils.Panic("parsing request from stdin", err)
 	}
 
 	smugglerConfig := readSmugglerConfig()
 	if smugglerConfig != nil {
 		request.Source = *smuggler.MergeSource(smugglerConfig, &request.Source)
 	}
+
+	return request
 }
 
 // Load local directory smuggler.yml
@@ -116,7 +122,7 @@ func readSmugglerConfig() *smuggler.SmugglerSource {
 }
 
 // Send back response
-func outputResponse(response smuggler.ResourceResponse) {
+func outputResponse(response *smuggler.ResourceResponse) {
 	if response.Type == smuggler.CheckType {
 		outputResponseCheck(response.Versions)
 	} else {
@@ -130,7 +136,7 @@ func outputResponseCheck(response []interface{}) {
 	}
 }
 
-func outputResponseInOut(response smuggler.ResourceResponse) {
+func outputResponseInOut(response *smuggler.ResourceResponse) {
 	if err := json.NewEncoder(os.Stdout).Encode(response); err != nil {
 		utils.Panic("writing response to stdout: %s", err)
 	}
