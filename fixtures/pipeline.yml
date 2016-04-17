@@ -144,7 +144,8 @@ jobs:
       - get: complex_command
         params:
           param4: val4
-          param5: "something with spaces"
+          smuggler_params:
+            param5: "something with spaces"
       - put: complex_command
         params:
           param4: val4

@@ -2,6 +2,7 @@ package smuggler
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type SmugglerSource struct {
@@ -98,12 +99,26 @@ func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRe
 		Type: requestType,
 	}
 
+	// Parse the request
 	err := json.Unmarshal([]byte(jsonString), &request)
 	if err != nil {
 		return nil, err
 	}
+	// Flatten the task params
+	m := request.Params["smuggler_params"]
+	if m != nil {
+		switch m := m.(type) {
+		case map[string]interface{}:
+			for k, v := range m {
+				request.Params[k] = v
+			}
+		default:
+			return nil, fmt.Errorf("Invalid format in task params 'smuggler_params', expected hash of key-value")
+		}
+		delete(request.Params, "smuggler_params")
+	}
 
-	// Set  the raw original request
+	// Populate the raw original request
 	rawRequest := RawResourceRequest{}
 	err = json.Unmarshal([]byte(jsonString), &rawRequest)
 	if err != nil {
@@ -111,7 +126,7 @@ func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRe
 	}
 	request.OrigRequest = rawRequest
 
-	// Create a filtered version of the request without the smuggler config
+	// Populate a filtered version of the request without the smuggler config
 	filteredRequest := RawResourceRequest{}
 	err = json.Unmarshal([]byte(jsonString), &filteredRequest)
 	delete(filteredRequest.Source, "commands")
