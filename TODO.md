@@ -75,9 +75,9 @@ source:
  * [X] Generic request and response
  * [X] Filter the request to the command
  * [X] One line shell commands
- * [ ] Fix config.yml with filtering
+ * [X] Fix config.yml with filtering
+ * [ ] Test no noise is print to stderr
  * [ ] Add some examples to README.md
- * [ ] Test print output to console, at least on error.
  * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
  * ~~[ ] Wrap other resources~~ can be implemented easily
  * ~~[ ] Write raw requests and read raw responses as json from
