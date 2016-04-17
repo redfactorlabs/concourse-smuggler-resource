@@ -243,35 +243,25 @@ resources:
           ssh-keygen -f id_rsa -N ''
           tar -cvzf $SMUGGLER_DESTINATION_DIR/id_rsa.tar.gz id_rsa id_rsa.tgz
 ```
- * `python`: TODO
-   ```
-python -c '
-friends = ["john", "pat", "gary", "michael"]
-for i, name in enumerate(friends):
-    print "iteration {iteration} is {name}".format(iteration=i, name=name)
-'
-```
- * `ruby`: TODO
 
 # Advanced usage
 
 ## Bundle smuggler configuration in `/opt/resource/smuggler.yml` in resource image
 
-You can optionally write all the configuration of the `source` section of
-the resource in the resource container image, in `/opt/resource/smuggler.yml`.
+You can optionally write the same configuration of the `source` section in
+the resource container image, in `/opt/resource/smuggler.yml`.
 
-You can still specify any parameter and command in the pipeline, and they will
-override the ones defined in `smuggler.yml` and passed to the commands as
-expected.
+The content of that file will be merged with the request, so that any parameter
+and command defined in the pipeline, will override the ones defined in
+`smuggler.yml`.
 
-This would allow you to encapsulate all the implementation and not expose
-it in the pipelines.
-
-You can also distribute the images as a ready to use resource.
+This enables you to encapsulate all the implementation and not expose
+it in the pipelines, keeping the pipeline simple and letting you to
+distribute and reuse the resource as desired.
 
 ## Wrapping other resources with smuggler
 
-You can read the raw JSON request from concourse from `stdin`, and write
+As mention, you can read the raw JSON request from concourse from `stdin`, and write
 it directly the response to `stdout`. Additionally, with `source.filter_raw_request`
 all the smuggler config will be removed from the resquest.
 
@@ -333,21 +323,16 @@ For example, to use S3 to store generated keys with `ssh-keygen`:
 
 ```
 
-## External config file
+# Examples
 
-TODO ... explain config.yml
+Check [the examples directory](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples)
+for examples of hacks and resources.
 
-## Smuggler as framework for new resources
+# Contributions
 
-## Examples
+Smuggling is fun! Share it! Send over or comment us your hacks and implementations.
 
-TODO
-
-## Contributions
-
-Smuggling is fun, share it! Send over or comment us your hacks and implementations.
-
-## Credits
+# Credits
 
 I stoled a lot of code around in github, specially from other resources
 like `s3-resource`. Thanks to all of you!

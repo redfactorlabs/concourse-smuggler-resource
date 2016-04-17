@@ -76,9 +76,8 @@ source:
  * [X] Filter the request to the command
  * [X] One line shell commands
  * [X] Fix config.yml with filtering
- * [ ] Test no noise is print to stderr
- * [ ] Add some examples to README.md
- * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
+ * [X] Test no noise is print to stderr
+ * [X] Add some examples to README.md
  * ~~[ ] Wrap other resources~~ can be implemented easily
  * ~~[ ] Write raw requests and read raw responses as json from
    `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`~~
@@ -96,6 +95,7 @@ source:
  * [ ] Metadata file lines with json?
  * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
  * [ ] Optional redirect all output to stderr.
+ * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
 
 # Future ideas
 
