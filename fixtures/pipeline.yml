@@ -205,6 +205,32 @@ resources:
   source:
     non_smuggler_param1: non_smuggler_val1
 
+- name: override_params
+  type: smuggler
+  source:
+    smuggler_params:
+      param1: source.smuggler_params
+      param2: source.smuggler_params
+      param3: source.smuggler_params
+      param4: source.smuggler_params
+    param1: source
+    param2: source
+    param3: source
+    commands:
+    - name: in
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        echo Command Start
+        echo "smuggler_param1=$SMUGGLER_param1"
+        echo "smuggler_param2=$SMUGGLER_param2"
+        echo "smuggler_param3=$SMUGGLER_param3"
+        echo "smuggler_param4=$SMUGGLER_param4"
+        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+        echo Command End 1>&2
+
 jobs:
   - name: a_job
     plan:
@@ -246,5 +272,9 @@ jobs:
       - get: mix_params_filtered
         params:
           non_smuggler_param2: non_smuggler_val2
-
-
+      - get: override_params
+        params:
+          smuggler_params:
+            param1: params.smuggler_params
+            param2: params.smuggler_params
+          param1: params

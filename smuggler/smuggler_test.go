@@ -312,6 +312,19 @@ var _ = Describe("SmugglerCommand params", func() {
 		})
 	})
 
+	Context("when executing a task with params being overridden", func() {
+		BeforeEach(func() {
+			requestType = InType
+			fixtureResourceName = "override_params"
+		})
+		It("parameters should be overridden in the order: source.smuggler_params source params.smuggler_params params ", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param1=params"))
+			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param2=params.smuggler_params"))
+			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param3=source"))
+			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param4=source.smuggler_params"))
+		})
+	})
+
 })
 
 func runCommandFromFixture(requestType RequestType, dataDir string, fixtureResourceName string, version string) {
