@@ -60,38 +60,6 @@ func (source SmugglerSource) FindCommand(name string) *CommandDefinition {
 	return nil
 }
 
-// Merges two configuration Sources
-// * Commands: get merged by key 'name'. sourceB overrides sourceA
-// * SmugglerParams: gets merged by key. sourceB overrides sourceA
-func MergeSource(sourceA, sourceB *SmugglerSource) *SmugglerSource {
-	var newSource SmugglerSource
-
-	newSource.Commands = make([]CommandDefinition, 0, 6)
-	for _, command := range sourceB.Commands {
-		newSource.Commands = append(newSource.Commands, command)
-	}
-	for _, command := range sourceA.Commands {
-		if newSource.FindCommand(command.Name) == nil {
-			newSource.Commands = append(newSource.Commands, command)
-		}
-	}
-	newSource.SmugglerParams = make(map[string]interface{})
-	for k, v := range sourceA.SmugglerParams {
-		newSource.SmugglerParams[k] = v
-	}
-	for k, v := range sourceB.SmugglerParams {
-		newSource.SmugglerParams[k] = v
-	}
-	newSource.ExtraParams = make(map[string]interface{})
-	for k, v := range sourceA.ExtraParams {
-		newSource.ExtraParams[k] = v
-	}
-	for k, v := range sourceB.ExtraParams {
-		newSource.ExtraParams[k] = v
-	}
-	return &newSource
-}
-
 type CommandDefinition struct {
 	Path string   `json:"path"`
 	Args []string `json:"args,omitempty"`

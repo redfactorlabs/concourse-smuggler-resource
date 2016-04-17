@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/imdario/mergo"
 
 	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 	"github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
@@ -86,22 +87,38 @@ func inputRequest(requestType smuggler.RequestType) *smuggler.ResourceRequest {
 	if err != nil {
 		utils.Panic("reading request from stdin", err)
 	}
+
+	// If there is a config in filesystem, merge it with the request
+	smugglerConfig := readSmugglerConfig()
+	if smugglerConfig != nil {
+		// Create jsonRequest merged with the config
+		var rawRequest interface{}
+		err := json.Unmarshal(input, &rawRequest)
+		if err != nil {
+			utils.Panic("parsing request from stdin", err)
+		}
+		err = mergo.MergeWithOverwrite(smugglerConfig, rawRequest)
+		if err != nil {
+			utils.Panic("merging config 'smuggler.yml' with request", err)
+		}
+		input, err = json.Marshal(smugglerConfig)
+		if err != nil {
+			utils.Panic("merging config 'smuggler.yml' with request (to json)", err)
+		}
+	}
+
 	request, err := smuggler.NewResourceRequest(requestType, string(input))
 	if err != nil {
 		utils.Panic("parsing request from stdin", err)
 	}
 
-	smugglerConfig := readSmugglerConfig()
-	if smugglerConfig != nil {
-		request.Source = *smuggler.MergeSource(smugglerConfig, &request.Source)
-	}
-
 	return request
 }
 
-// Load local directory smuggler.yml
-func readSmugglerConfig() *smuggler.SmugglerSource {
+// Load the local config file
+func readSmugglerConfig() interface{} {
 	var source smuggler.SmugglerSource
+	var config interface{}
 
 	smugglerConfigFile := filepath.Join(filepath.Dir(os.Args[0]), "smuggler.yml")
 	if _, err := os.Stat(smugglerConfigFile); os.IsNotExist(err) {
@@ -112,13 +129,15 @@ func readSmugglerConfig() *smuggler.SmugglerSource {
 		utils.Panic("Error reading '%s': %s", smugglerConfigFile, err)
 	}
 
-	// The yaml would contain a verbatin copy of the Source
+	// Check the syntax of the config
 	yaml.Unmarshal(content, &source)
 	if err != nil {
 		utils.Panic("Error parsing '%s': %s", smugglerConfigFile, err)
 	}
+	// But unmarshall in raw
+	yaml.Unmarshal(content, &config)
 
-	return &source
+	return &map[string]interface{}{"source": config}
 }
 
 // Send back response
