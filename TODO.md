@@ -75,16 +75,18 @@ source:
  * [X] Generic request and response
  * [X] Filter the request to the command
  * [ ] ... Auto filter params
- * [ ] ... test that filtered params are not passed
+ * [ ] ... automatically test that filtered params are not passed
  * [ ] ... Test complex parameters with json
  * [ ] ... Test override of params
- * [ ] Add some examples to README.md
+ * [ ] ... ResourceResponse implements ToJSON method.
  * [ ] Optional redirect all output to stderr.
- * [ ] Print output to console, at least on error.
  * [ ] One line shell commands
- * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
+ * [ ] Add some examples to README.md
+ * [ ] Test print output to console, at least on error.
  * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
- * [ ] Write raw requests and read raw responses as json from `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`
+ * ~~[ ] Write raw requests and read raw responses as json from
+   `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`~~
+    I will document use `cat > file` if required.
 
 # Desired
 
@@ -97,6 +99,7 @@ source:
  * [ ] Better error messages if config syntax is not right: Currently: `error reading request from stdin: json: cannot unmarshal object into Go value of type []smuggler.CommandDefinition
 [0m`
  * [ ] Metadata file lines with json?
+ * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
 
 # Future ideas
 
