@@ -74,23 +74,18 @@ source:
  * [X] Read from stdout the response
  * [X] Generic request and response
  * [X] Filter the request to the command
- * [ ] ... Auto filter params
- * [ ] ... automatically test that filtered params are not passed
- * [ ] ... Test complex parameters with json
- * [ ] ... Test override of params
- * [ ] ... ResourceResponse implements ToJSON method.
- * [ ] Optional redirect all output to stderr.
- * [ ] One line shell commands
+ * [X] One line shell commands
+ * [ ] Fix config.yml with filtering
  * [ ] Add some examples to README.md
  * [ ] Test print output to console, at least on error.
  * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
+ * ~~[ ] Wrap other resources~~ can be implemented easily
  * ~~[ ] Write raw requests and read raw responses as json from
    `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`~~
     I will document use `cat > file` if required.
 
 # Desired
 
- * [ ] Wrap other resources
  * [ ] Resource to "Inject smuggler" in other images, based in smuggler
  * [ ] smuggler for go inline code :)
  * [ ] autobuild docker
@@ -100,6 +95,7 @@ source:
 [0m`
  * [ ] Metadata file lines with json?
  * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
+ * [ ] Optional redirect all output to stderr.
 
 # Future ideas
 

@@ -327,6 +327,44 @@ var _ = Describe("SmugglerCommand params", func() {
 
 })
 
+var _ = Describe("SmugglerCommand one line commands", func() {
+	BeforeEach(func() {
+		dataDir = "/some/path"
+	})
+	JustBeforeEach(func() {
+		runCommandFromFixture(requestType, dataDir, fixtureResourceName, "1.2.3")
+	})
+
+	Context("When executing a in command", func() {
+		BeforeEach(func() {
+			requestType = CheckType
+			fixtureResourceName = "one_line_commands"
+		})
+		It("should execute the one line version of the command", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("Inline command for check"))
+		})
+	})
+	Context("When executing a in command", func() {
+		BeforeEach(func() {
+			requestType = InType
+			fixtureResourceName = "one_line_commands"
+		})
+		It("should execute the one line version of the command", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("Inline command for in"))
+		})
+	})
+	Context("When executing a out command", func() {
+		BeforeEach(func() {
+			requestType = OutType
+			fixtureResourceName = "one_line_commands"
+		})
+		It("should execute the one line version of the command", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("Inline command for out"))
+		})
+	})
+
+})
+
 func runCommandFromFixture(requestType RequestType, dataDir string, fixtureResourceName string, version string) {
 	requestJson, err = pipeline.JsonRequest(requestType, fixtureResourceName, "a_job", version)
 	Ω(err).ShouldNot(HaveOccurred())

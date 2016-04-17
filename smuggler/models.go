@@ -2,17 +2,61 @@ package smuggler
 
 import (
 	"encoding/json"
+	"os/exec"
+	"strings"
+
 	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 )
 
 type SmugglerSource struct {
+	CheckCommand     string                 `json:"check_command,omitempty"`
+	InCommand        string                 `json:"in_command,omitempty"`
+	OutCommand       string                 `json:"out_command,omitempty"`
 	Commands         []CommandDefinition    `json:"commands,omitempty"`
 	FilterRawRequest bool                   `json:"filter_raw_request,omitempty"`
 	SmugglerParams   map[string]interface{} `json:"smuggler_params,omitempty"`
 	ExtraParams      map[string]interface{} `json:"-"`
 }
 
+func WrapCommandWithShell(name string, commandLine string) *CommandDefinition {
+	// Try to find bash
+	shellPath, err := exec.LookPath("bash")
+	if err == nil {
+		return &CommandDefinition{
+			Name: name,
+			Path: shellPath,
+			Args: []string{"-e", "-u", "-o", "pipefail", "-c", commandLine},
+		}
+	}
+	// Try to find sh
+	shellPath, err = exec.LookPath("sh")
+	if err == nil {
+		return &CommandDefinition{
+			Name: name,
+			Path: shellPath,
+			Args: []string{"-e", "-u", "-o", "pipefail", "-c", commandLine},
+		}
+	}
+
+	// In last case, use the command itself
+	l := strings.Split(commandLine, ",")
+	return &CommandDefinition{
+		Name: name,
+		Path: l[0],
+		Args: l[1:],
+	}
+}
+
 func (source SmugglerSource) FindCommand(name string) *CommandDefinition {
+	if name == "check" && source.CheckCommand != "" {
+		return WrapCommandWithShell(name, source.CheckCommand)
+	}
+	if name == "in" && source.InCommand != "" {
+		return WrapCommandWithShell(name, source.InCommand)
+	}
+	if name == "out" && source.OutCommand != "" {
+		return WrapCommandWithShell(name, source.OutCommand)
+	}
 	for _, command := range source.Commands {
 		if command.Name == name {
 			return &command

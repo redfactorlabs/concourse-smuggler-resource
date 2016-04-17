@@ -205,6 +205,23 @@ resources:
   source:
     non_smuggler_param1: non_smuggler_val1
 
+- name: one_line_commands
+  type: smuggler
+  source:
+    check_command: "echo Inline command for $SMUGGLER_COMMAND"
+    in_command: "echo Inline command for $SMUGGLER_COMMAND"
+    out_command: "echo Inline command for $SMUGGLER_COMMAND"
+    commands:
+    - name: check
+      path: "echo"
+      args: ["this should not be executed"]
+    - name: in
+      path: "echo"
+      args: ["this should not be executed"]
+    - name: out
+      path: "echo"
+      args: ["this should not be executed"]
+
 - name: override_params
   type: smuggler
   source:

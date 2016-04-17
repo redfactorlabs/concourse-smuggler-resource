@@ -40,6 +40,12 @@ resources:
 - name: my_smuggler_resource
   type: smuggler
   source:
+    # Optional quick one line definition of commands
+    check_command: "..."
+    in_command: "..."
+    out_command: "..."
+
+    # Multiline definition
     commands:
     - name: check
       path: <command>
@@ -91,13 +97,24 @@ jobs:
 
 The `source` configuraton includes:
 
- * `commands`: *Optional*. Each command definition for `check/in/out` commands
-   called from concourse to `check` new versions and `get` or `put` resources.
+ * `check_command`, `in_command`, `out_command`: short way to define the
+   commands `check/in/out` commands called from concourse to `check` new
+   versions and `get` or `put` resources.
+
+   Each one gets the command in one string which will shell out to
+   `bash -o -u -o pipefail -c <cmd>` or `sh -o -u -c <cmd>`.
+
+   If none of `bash` or `sh` is found, the command will be executed directly.
+
+   These definitions have precedence to the ones in `commands`.
+
+ * `commands`: *Optional*. Long way to define commands.
+
    Each command has a `path` and `args` similar to
    [concourse task `run` definition](https://concourse.ci/running-tasks.html#run)
 
-   All commands are *optional*, and if not defined they will execute a
-   dummy operation (Of course you always want to define at least one ;)).
+> All commands are *optional*, and if not defined they will execute a
+> dummy operation (Of course you always want to define at least one ;)).
 
  * `filter_raw_request`: Filter the smuggler specific config from the
    verbatin json request passed via `stdin` to the commands.
@@ -170,6 +187,8 @@ Output to send to concourse to the commands:
     request [as described in the implementing concourse resources documentation.]
     (https://concourse.ci/implementing-resources.html)
 
+> **Note** if you print to stdout and it is not JSON, the output will be discarded.
+
  * `${SMUGGLER_OUTPUT_DIR}/versions`: For `check/in`.
    * **Optional**, only processed if no json is written in `stdout`.
    * For `check`: Your command **must** write here the versions found, one line per version.
@@ -187,9 +206,6 @@ Output to send to concourse to the commands:
    * For `in`: If no version is written, smuggler will use the same as
      passed to the command. Only the first line will be taken into account.
    * If each line is a valid JSON, they will be interpreted.
-
-> You **must** write some output for `check` via verbatin JSON in `stdin` or
-> `${SMUGGLER_OUTPUT_DIR}/versions`.
 
 ### `check` Find out what you want to smuggle
 
