@@ -25,6 +25,7 @@ var command *SmugglerCommand
 var fixtureResourceName string
 var requestType RequestType
 var requestVersion json.RawMessage
+var requestJson string
 var err error
 var dataDir string
 
@@ -80,20 +81,12 @@ var _ = Describe("Check Command basic tests", func() {
 	})
 })
 
-var _ = Describe("SmugglerCommand Actions", func() {
+var _ = Describe("SmugglerCommand actions normal input-output", func() {
 	BeforeEach(func() {
 		dataDir = "/some/path"
 	})
 	JustBeforeEach(func() {
-		var requestJson string
-		requestJson, err = pipeline.JsonRequest(requestType, fixtureResourceName, "a_job", "1.2.3")
-		Ω(err).ShouldNot(HaveOccurred())
-
-		request, err = NewResourceRequest(requestType, requestJson)
-		Ω(err).ShouldNot(HaveOccurred())
-
-		command = NewSmugglerCommand(logger)
-		response, err = command.RunAction(dataDir, *request)
+		runCommandFromFixture(requestType, dataDir, fixtureResourceName, "1.2.3")
 	})
 
 	Context("when calling action 'check'", func() {
@@ -138,7 +131,39 @@ var _ = Describe("SmugglerCommand Actions", func() {
 			})
 		})
 
-		Context("when given a config with a command which reads the request from stdin", func() {
+	})
+	Context("When calling action 'out'", func() {
+		BeforeEach(func() {
+			requestType = OutType
+		})
+		Context("when running CommonSmugglerTests()", CommonSmugglerTests())
+
+		Context("when running InOutCommonSmugglerTests()", InOutCommonSmugglerTests())
+
+		Context("when given a config with a complex script from yaml", func() {
+			BeforeEach(func() {
+				fixtureResourceName = "complex_command"
+			})
+			It("it gets the sources dir", func() {
+				Ω(command.LastCommandOutput).Should(ContainSubstring("sourcesDir=/some/path"))
+			})
+		})
+	})
+})
+
+var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
+	BeforeEach(func() {
+		dataDir = "/some/path"
+	})
+	JustBeforeEach(func() {
+		runCommandFromFixture(requestType, dataDir, fixtureResourceName, "1.2.3")
+	})
+
+	Context("when calling action 'in'", func() {
+		BeforeEach(func() {
+			requestType = InType
+		})
+		Context("when a command reads and dumps the request from stdin", func() {
 			BeforeEach(func() {
 				dataDir, err = ioutil.TempDir("", "destination_dir")
 				Ω(err).ShouldNot(HaveOccurred())
@@ -149,7 +174,7 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				os.RemoveAll(dataDir)
 			})
 
-			It("the command writes the same request is in the destiation dir", func() {
+			It("the command we find the same request destiation dir", func() {
 				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
 				Ω(err).ShouldNot(HaveOccurred())
 
@@ -179,26 +204,40 @@ var _ = Describe("SmugglerCommand Actions", func() {
 				Ω(response.Version).Should(Equal(v))
 			})
 		})
-
-	})
-	Context("When calling action 'out'", func() {
-		BeforeEach(func() {
-			requestType = OutType
-		})
-		Context("when running CommonSmugglerTests()", CommonSmugglerTests())
-
-		Context("when running InOutCommonSmugglerTests()", InOutCommonSmugglerTests())
-
-		Context("when given a config with a complex script from yaml", func() {
-			BeforeEach(func() {
-				fixtureResourceName = "complex_command"
-			})
-			It("it gets the sources dir", func() {
-				Ω(command.LastCommandOutput).Should(ContainSubstring("sourcesDir=/some/path"))
-			})
-		})
 	})
 })
+
+var _ = Describe("SmugglerCommand params", func() {
+	BeforeEach(func() {
+		dataDir = "/some/path"
+	})
+	JustBeforeEach(func() {
+		runCommandFromFixture(requestType, dataDir, fixtureResourceName, "1.2.3")
+	})
+
+	Context("when executing a task with `smuggler_params` in the params", func() {
+		BeforeEach(func() {
+			requestType = InType
+			fixtureResourceName = "complex_command"
+		})
+
+		It("should get those params as environment variables", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("param6=an additional param"))
+		})
+
+	})
+})
+
+func runCommandFromFixture(requestType RequestType, dataDir string, fixtureResourceName string, version string) {
+	requestJson, err = pipeline.JsonRequest(requestType, fixtureResourceName, "a_job", version)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	request, err = NewResourceRequest(requestType, requestJson)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	command = NewSmugglerCommand(logger)
+	response, err = command.RunAction(dataDir, *request)
+}
 
 func CommonSmugglerTests() func() {
 	return func() {

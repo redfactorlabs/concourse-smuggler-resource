@@ -42,6 +42,7 @@ resources:
         echo "param3=${SMUGGLER_param3}"
         echo "param4=${SMUGGLER_param4}"
         echo "param5=${SMUGGLER_param5}"
+        echo "param6=${SMUGGLER_param6}"
         echo "action=${SMUGGLER_ACTION}"
         echo "action=${SMUGGLER_COMMAND}"
         echo "value1= something quite long  " > ${SMUGGLER_OUTPUT_DIR}/metadata
@@ -144,8 +145,9 @@ jobs:
       - get: complex_command
         params:
           param4: val4
+          param5: "something with spaces"
           smuggler_params:
-            param5: "something with spaces"
+            param6: "an additional param"
       - put: complex_command
         params:
           param4: val4
