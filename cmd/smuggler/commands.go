@@ -94,8 +94,8 @@ func inputRequest(request *smuggler.ResourceRequest) {
 }
 
 // Load local directory smuggler.yml
-func readSmugglerConfig() *smuggler.Source {
-	var source smuggler.Source
+func readSmugglerConfig() *smuggler.SmugglerSource {
+	var source smuggler.SmugglerSource
 
 	smugglerConfigFile := filepath.Join(filepath.Dir(os.Args[0]), "smuggler.yml")
 	if _, err := os.Stat(smugglerConfigFile); os.IsNotExist(err) {

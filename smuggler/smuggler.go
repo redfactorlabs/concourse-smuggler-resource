@@ -3,7 +3,6 @@ package smuggler
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -71,6 +70,7 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 	command.LastCommandErr, _ = ioutil.ReadAll(stderr)
 	command.logger.Printf("[INFO] Output '%s'", command.LastCommandOutput)
 	command.logger.Printf("[INFO] Stderr '%s'", command.LastCommandErr)
+	command.logger.Printf("[INFO] Return error '%v'", err)
 
 	return err
 }
@@ -80,10 +80,6 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 
 	var response = ResourceResponse{
 		Type: request.Type,
-	}
-
-	if ok, message := request.Source.IsValid(); !ok {
-		return response, errors.New(message)
 	}
 
 	commandDefinition := request.Source.FindCommand(string(request.Type))
@@ -98,19 +94,9 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 	}
 	defer os.RemoveAll(outputDir)
 
-	// Prepare the params to send to the commands
-	params := copyMaps(request.Source.SmugglerParams, request.Params)
-	params["ACTION"] = string(request.Type)
-	params["COMMAND"] = string(request.Type)
-	params["OUTPUT_DIR"] = outputDir
-	switch request.Type {
-	case "check":
-		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
-	case "in":
-		params["DESTINATION_DIR"] = dataDir
-		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
-	case "out":
-		params["SOURCES_DIR"] = dataDir
+	params, err := prepareParams(dataDir, outputDir, request)
+	if err != nil {
+		return response, err
 	}
 
 	jsonRequest, err := prepareJsonRequest(request)
@@ -153,8 +139,32 @@ func copyMaps(maps ...map[string]interface{}) map[string]interface{} {
 	return result
 }
 
+func prepareParams(dataDir string, outputDir string, request ResourceRequest) (map[string]interface{}, error) {
+	// Prepare the params to send to the commands
+	params := copyMaps(
+		request.Source.SmugglerParams,
+		request.Source.ExtraParams,
+		request.Params.SmugglerParams,
+		request.Params.ExtraParams,
+	)
+	params["ACTION"] = string(request.Type)
+	params["COMMAND"] = string(request.Type)
+	params["OUTPUT_DIR"] = outputDir
+	switch request.Type {
+	case "check":
+		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
+	case "in":
+		params["DESTINATION_DIR"] = dataDir
+		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
+	case "out":
+		params["SOURCES_DIR"] = dataDir
+	}
+
+	return params, nil
+}
+
 func prepareJsonRequest(request ResourceRequest) ([]byte, error) {
-	jsonRequest, err := json.Marshal(request)
+	jsonRequest, err := json.Marshal(request.OrigRequest)
 	return jsonRequest, err
 }
 
