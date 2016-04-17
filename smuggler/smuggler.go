@@ -163,8 +163,14 @@ func prepareParams(dataDir string, outputDir string, request ResourceRequest) (m
 	return params, nil
 }
 
-func prepareJsonRequest(request ResourceRequest) ([]byte, error) {
-	jsonRequest, err := json.Marshal(request.OrigRequest)
+func prepareJsonRequest(request *ResourceRequest) ([]byte, error) {
+	var jsonRequest []byte
+	var err error
+	if request.Source.FilterRawRequest {
+		jsonRequest, err = json.Marshal(request.FilteredRequest)
+	} else {
+		jsonRequest, err = json.Marshal(request.OrigRequest)
+	}
 	return jsonRequest, err
 }
 

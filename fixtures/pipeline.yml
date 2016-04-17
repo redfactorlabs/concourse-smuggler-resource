@@ -109,6 +109,9 @@ resources:
 - name: dump_request_from_stdin
   type: smuggler
   source:
+    smuggler_params:
+      smuggler_param1: smuggler_val1
+    non_smuggler_param1: non_smuggler_val1
     commands:
     - name: in
       path: bash
@@ -117,6 +120,23 @@ resources:
       - -c
       - |
         cat > ${SMUGGLER_DESTINATION_DIR}/stdin.json
+
+- name: dump_filtered_request_from_stdin
+  type: smuggler
+  source:
+    smuggler_params:
+      smuggler_param1: smuggler_val1
+    non_smuggler_param1: non_smuggler_val1
+    filter_raw_request: true
+    commands:
+    - name: in
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        cat > ${SMUGGLER_DESTINATION_DIR}/stdin.json
+
 
 - name: write_response_to_stdout
   type: smuggler
@@ -182,6 +202,19 @@ jobs:
           param5: "something with spaces"
       - get: dump_request_from_stdin
         params:
+          smuggler_params:
+            smuggler_param2: smuggler_val2
+          non_smuggler_param2: non_smuggler_val2
+          simple_string_params: "something with spaces"
+          complex_param:
+            with: "keys"
+            and: [ "other", "complex" ]
+            structures: { like: "this" }
+      - get: dump_filtered_request_from_stdin
+        params:
+          smuggler_params:
+            smuggler_param2: smuggler_val2
+          non_smuggler_param2: non_smuggler_val2
           simple_string_params: "something with spaces"
           complex_param:
             with: "keys"
