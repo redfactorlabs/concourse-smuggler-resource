@@ -3,8 +3,7 @@
 	"GoVersion": "go1.6",
 	"GodepVersion": "v62",
 	"Packages": [
-		"./cmd/smuggler",
-		"./smuggler"
+		"./..."
 	],
 	"Deps": [
 		{
@@ -14,6 +13,15 @@
 		{
 			"ImportPath": "github.com/ghodss/yaml",
 			"Rev": "1a6f069841556a7bcaff4a397ca6e8328d266c2f"
+		},
+		{
+			"ImportPath": "github.com/go-yaml/yaml",
+			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
+		},
+		{
+			"ImportPath": "github.com/imdario/mergo",
+			"Comment": "0.2.2-2-gea01514",
+			"Rev": "ea0151498788f6fab6365eae24f29f41c0ac0acc"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/colorstring",
