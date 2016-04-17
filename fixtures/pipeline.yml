@@ -158,6 +158,24 @@ resources:
         }
         EOF
 
+- name: json_in_params_and_versions
+  type: smuggler
+  source:
+    commands:
+    - name: in
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        echo "complex_param=$SMUGGLER_complex_param"
+        echo '{"ref": "someid"}' > ${SMUGGLER_OUTPUT_DIR}/versions
+    smuggler_params:
+      complex_param:
+        with: "keys"
+        and: [ "other", "complex" ]
+        structures: { like: "this" }
+
 - name: mix_params
   type: smuggler
   source:

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -282,6 +283,35 @@ var _ = Describe("SmugglerCommand params", func() {
 			Ω(command.LastCommandOutput).Should(ContainSubstring("non_smuggler_param2=non_smuggler_val2"))
 		})
 	})
+	Context("when executing a task which handles json in params and versions", func() {
+		BeforeEach(func() {
+			requestType = InType
+			fixtureResourceName = "json_in_params_and_versions"
+		})
+		It("should get the json param as a serialized json", func() {
+			expectedJson := `{
+				"with": "keys",
+        "and": [ "other", "complex" ],
+        "structures": { "like": "this" }
+			}`
+
+			m := make(map[string]string)
+			for _, l := range strings.Split(string(command.LastCommandOutput), "\n") {
+				l := strings.SplitN(l, "=", 2)
+				if len(l) >= 2 {
+					k, v := l[0], l[1]
+					m[k] = v
+				}
+			}
+			Ω(m).Should(HaveKey("complex_param"))
+			Ω(m["complex_param"]).Should(MatchJSON(expectedJson))
+		})
+		It("should send the version param as a serialized json", func() {
+			m := response.Version.(map[string]interface{})
+			Ω(m).Should(HaveKey("ref"))
+		})
+	})
+
 })
 
 func runCommandFromFixture(requestType RequestType, dataDir string, fixtureResourceName string, version string) {
