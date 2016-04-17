@@ -33,7 +33,7 @@ var _ = Describe("smuggler commands", func() {
 		commandPath        string
 		dataDir            string
 		expectedExitStatus int
-		request            *ResourceRequest
+		jsonRequest        string
 	)
 
 	BeforeEach(func() {
@@ -47,16 +47,12 @@ var _ = Describe("smuggler commands", func() {
 
 		RegisterFailHandler(Fail)
 
-		stdin := &bytes.Buffer{}
-		err = json.NewEncoder(stdin).Encode(request)
-		Ω(err).ShouldNot(HaveOccurred())
-
 		if dataDir == "" {
 			command = exec.Command(commandPath)
 		} else {
 			command = exec.Command(commandPath, dataDir)
 		}
-		command.Stdin = stdin
+		command.Stdin = bytes.NewBuffer([]byte(jsonRequest))
 
 		// Point log file to a temporary location
 		logFile, err = ioutil.TempFile("", "smuggler.log")
@@ -83,7 +79,7 @@ var _ = Describe("smuggler commands", func() {
 			BeforeEach(func() {
 				commandPath = checkPath
 
-				commandPath, request = prepareCommandCheck("complex_command")
+				commandPath, jsonRequest = prepareCommandCheck("complex_command")
 			})
 			It("outputs a valid json with a version", func() {
 				var response []interface{}
@@ -105,13 +101,13 @@ var _ = Describe("smuggler commands", func() {
 		})
 		Context("for the 'in' command", func() {
 			BeforeEach(func() {
-				commandPath, dataDir, request = prepareCommandIn("complex_command")
+				commandPath, dataDir, jsonRequest = prepareCommandIn("complex_command")
 			})
 			Context("when running InOutCommonSmugglerTests()", InOutCommonSmugglerTests(&session))
 		})
 		Context("for the 'out' command", func() {
 			BeforeEach(func() {
-				commandPath, dataDir, request = prepareCommandOut("complex_command")
+				commandPath, dataDir, jsonRequest = prepareCommandOut("complex_command")
 			})
 			Context("when running InOutCommonSmugglerTests()", InOutCommonSmugglerTests(&session))
 		})
@@ -120,7 +116,7 @@ var _ = Describe("smuggler commands", func() {
 	Context("when given a dummy command", func() {
 		Context("for the 'check' command", func() {
 			BeforeEach(func() {
-				commandPath, request = prepareCommandCheck("dummy_command")
+				commandPath, jsonRequest = prepareCommandCheck("dummy_command")
 			})
 
 			It("returns empty version list", func() {
@@ -132,7 +128,7 @@ var _ = Describe("smuggler commands", func() {
 		})
 		Context("for the 'in' command", func() {
 			BeforeEach(func() {
-				commandPath, dataDir, request = prepareCommandIn("dummy_command")
+				commandPath, dataDir, jsonRequest = prepareCommandIn("dummy_command")
 			})
 			It("returns empty response", func() {
 				var response ResourceResponse
@@ -143,7 +139,7 @@ var _ = Describe("smuggler commands", func() {
 		})
 		Context("for the 'out' command", func() {
 			BeforeEach(func() {
-				commandPath, dataDir, request = prepareCommandOut("dummy_command")
+				commandPath, dataDir, jsonRequest = prepareCommandOut("dummy_command")
 			})
 			It("returns empty response", func() {
 				var response ResourceResponse
@@ -158,7 +154,7 @@ var _ = Describe("smuggler commands", func() {
 		Context("for the 'check' command", func() {
 			BeforeEach(func() {
 				expectedExitStatus = 2
-				commandPath, request = prepareCommandCheck("fail_command")
+				commandPath, jsonRequest = prepareCommandCheck("fail_command")
 			})
 
 			It("returns an error", func() {
@@ -168,7 +164,7 @@ var _ = Describe("smuggler commands", func() {
 		Context("for the 'in' command", func() {
 			BeforeEach(func() {
 				expectedExitStatus = 2
-				commandPath, dataDir, request = prepareCommandIn("fail_command")
+				commandPath, dataDir, jsonRequest = prepareCommandIn("fail_command")
 			})
 
 			It("returns an error", func() {
@@ -178,7 +174,7 @@ var _ = Describe("smuggler commands", func() {
 		Context("for the 'out' command", func() {
 			BeforeEach(func() {
 				expectedExitStatus = 2
-				commandPath, dataDir, request = prepareCommandOut("fail_command")
+				commandPath, dataDir, jsonRequest = prepareCommandOut("fail_command")
 			})
 
 			It("returns an error", func() {
@@ -195,7 +191,7 @@ var _ = Describe("smuggler commands", func() {
 		})
 		Context("when running 'check' with a dummy definition", func() {
 			BeforeEach(func() {
-				commandPath, request = prepareCommandCheck("dummy_command")
+				commandPath, jsonRequest = prepareCommandCheck("dummy_command")
 			})
 
 			It("returns empty version list", func() {
@@ -209,7 +205,7 @@ var _ = Describe("smuggler commands", func() {
 		Context("when running 'check' with a complex_command definition", func() {
 			BeforeEach(func() {
 				commandPath = checkPath
-				commandPath, request = prepareCommandCheck("complex_command")
+				commandPath, jsonRequest = prepareCommandCheck("complex_command")
 			})
 			It("outputs a valid json with a version", func() {
 				var response []interface{}
@@ -240,7 +236,7 @@ var _ = Describe("smuggler commands", func() {
 		})
 		Context("when running 'check' with a empty command definition", func() {
 			BeforeEach(func() {
-				commandPath, request = prepareCommandCheck("dummy_command")
+				commandPath, jsonRequest = prepareCommandCheck("dummy_command")
 			})
 
 			It("returns versions of the config file", func() {
@@ -263,7 +259,7 @@ var _ = Describe("smuggler commands", func() {
 
 		Context("when running 'check' with a complex command definition", func() {
 			BeforeEach(func() {
-				commandPath, request = prepareCommandCheck("complex_command")
+				commandPath, jsonRequest = prepareCommandCheck("complex_command")
 			})
 
 			It("returns versions of the definition", func() {
@@ -289,48 +285,43 @@ var _ = Describe("smuggler commands", func() {
 
 })
 
-func getRequest(t RequestType, resourceName string) *ResourceRequest {
-	requestJson, err := pipeline.JsonRequest(t, resourceName, "a_job", "1.2.3")
+func getJsonRequest(t RequestType, resourceName string) string {
+	jsonRequest, err := pipeline.JsonRequest(t, resourceName, "a_job", "1.2.3")
 	Ω(err).ShouldNot(HaveOccurred())
 
-	fmt.Fprintf(GinkgoWriter, "%s\n", requestJson)
-
-	request, err := NewResourceRequest(t, requestJson)
-	Ω(err).ShouldNot(HaveOccurred())
-
-	return request
+	return jsonRequest
 }
 
-func prepareCommandCheck(resourceName string) (string, *ResourceRequest) {
+func prepareCommandCheck(resourceName string) (string, string) {
 	commandPath := checkPath
 
-	request := getRequest(CheckType, resourceName)
+	jsonRequest := getJsonRequest(CheckType, resourceName)
 
-	return commandPath, request
+	return commandPath, jsonRequest
 }
 
-func prepareCommandIn(resourceName string) (string, string, *ResourceRequest) {
+func prepareCommandIn(resourceName string) (string, string, string) {
 	commandPath := inPath
 
 	tmpPath, err := ioutil.TempDir("", "in_command")
 	Ω(err).ShouldNot(HaveOccurred())
 	dataDir := filepath.Join(tmpPath, "destination")
 
-	request := getRequest(InType, resourceName)
+	jsonRequest := getJsonRequest(InType, resourceName)
 
-	return commandPath, dataDir, request
+	return commandPath, dataDir, jsonRequest
 }
 
-func prepareCommandOut(resourceName string) (string, string, *ResourceRequest) {
+func prepareCommandOut(resourceName string) (string, string, string) {
 	commandPath := outPath
 
 	tmpPath, err := ioutil.TempDir("", "in_command")
 	Ω(err).ShouldNot(HaveOccurred())
 	dataDir := filepath.Join(tmpPath, "destination")
 
-	request := getRequest(OutType, resourceName)
+	jsonRequest := getJsonRequest(OutType, resourceName)
 
-	return commandPath, dataDir, request
+	return commandPath, dataDir, jsonRequest
 }
 
 func InOutCommonSmugglerTests(session **gexec.Session) func() {

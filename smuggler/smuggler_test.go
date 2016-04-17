@@ -13,6 +13,8 @@ import (
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource/helpers/test"
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
+
+	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 )
 
 var pipeline_yml = Fixture("../fixtures/pipeline.yml")
@@ -21,7 +23,7 @@ var pipeline = NewPipeline(pipeline_yml)
 var logger = log.New(GinkgoWriter, "smuggler: ", log.Lmicroseconds)
 
 var request *ResourceRequest
-var response ResourceResponse
+var response *ResourceResponse
 var command *SmugglerCommand
 var fixtureResourceName string
 var requestType RequestType
@@ -47,7 +49,7 @@ var _ = Describe("Check Command basic tests", func() {
 
 		It("it executes the command successfully and captures the output", func() {
 			command := NewSmugglerCommand(logger)
-			command.RunAction("", request)
+			command.RunAction("", &request)
 			Ω(command.LastCommandOutput).Should(ContainSubstring("basic echo test"))
 			Ω(command.LastCommandSuccess()).Should(BeTrue())
 		})
@@ -71,7 +73,7 @@ var _ = Describe("Check Command basic tests", func() {
 			request, err = NewResourceRequest(CheckType, requestJson)
 			Ω(err).ShouldNot(HaveOccurred())
 			command = NewSmugglerCommand(logger)
-			response, err = command.RunAction("", *request)
+			response, err = command.RunAction("", request)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
@@ -227,6 +229,20 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 				Ω(r.Params.SmugglerParams).Should(BeEmpty())
 				Ω(r.Params.ExtraParams).ShouldNot(BeEmpty())
 			})
+			It("we the filtered request has not any of the smuggler fields", func() {
+				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
+				Ω(err).ShouldNot(HaveOccurred())
+
+				r, err := NewRawResourceRequest(string(b))
+				Ω(err).ShouldNot(HaveOccurred())
+
+				for _, t := range utils.ListJsonTagsOfStruct(request.Source) {
+					Ω(r.Source).ShouldNot(HaveKey(t))
+				}
+				for _, t := range utils.ListJsonTagsOfStruct(request.Params) {
+					Ω(r.Params).ShouldNot(HaveKey(t))
+				}
+			})
 		})
 		Context("when given a config with a command which writes the json response to stdout", func() {
 			BeforeEach(func() {
@@ -260,7 +276,6 @@ var _ = Describe("SmugglerCommand params", func() {
 			requestType = InType
 			fixtureResourceName = "mix_params"
 		})
-
 		It("should get all the params as environment variables", func() {
 			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param1=smuggler_val1"))
 			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param2=smuggler_val2"))
@@ -320,7 +335,7 @@ func runCommandFromFixture(requestType RequestType, dataDir string, fixtureResou
 	Ω(err).ShouldNot(HaveOccurred())
 
 	command = NewSmugglerCommand(logger)
-	response, err = command.RunAction(dataDir, *request)
+	response, err = command.RunAction(dataDir, request)
 }
 
 func CommonSmugglerTests() func() {

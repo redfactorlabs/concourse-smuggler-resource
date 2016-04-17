@@ -75,7 +75,7 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 	return err
 }
 
-func (command *SmugglerCommand) RunAction(dataDir string, request ResourceRequest) (ResourceResponse, error) {
+func (command *SmugglerCommand) RunAction(dataDir string, request *ResourceRequest) (*ResourceResponse, error) {
 	command.logger.Printf("[INFO] Running %s action", string(request.Type))
 
 	var response = ResourceResponse{
@@ -85,44 +85,44 @@ func (command *SmugglerCommand) RunAction(dataDir string, request ResourceReques
 	commandDefinition := request.Source.FindCommand(string(request.Type))
 	if commandDefinition == nil {
 		command.logger.Printf("[INFO] No command definition, skipping")
-		return response, nil
+		return &response, nil
 	}
 
 	outputDir, err := ioutil.TempDir("", "smuggler-run")
 	if err != nil {
-		return response, err
+		return &response, err
 	}
 	defer os.RemoveAll(outputDir)
 
 	params, err := prepareParams(dataDir, outputDir, request)
 	if err != nil {
-		return response, err
+		return &response, err
 	}
 
 	jsonRequest, err := prepareJsonRequest(request)
 	if err != nil {
-		return response, err
+		return &response, err
 	}
 
 	err = command.Run(*commandDefinition, params, jsonRequest)
 	if err != nil {
-		return response, err
+		return &response, err
 	}
 
 	// Try to get the response from a valid json from Stdout.
 	// If not, as files from the output directory
-	err = populateResponseFromStdoutAsJson(command.LastCommandOutput, &request, &response)
+	err = populateResponseFromStdoutAsJson(command.LastCommandOutput, request, &response)
 	if err != nil {
-		err = populateResponseFromOutputDir(outputDir, &request, &response)
+		err = populateResponseFromOutputDir(outputDir, request, &response)
 		if err != nil {
-			return response, err
+			return &response, err
 		}
 	}
 
 	command.logger.Printf("[INFO] command reports versions '%q'", response.Versions)
 	command.logger.Printf("[INFO] command reports metadata '%q'", response.Metadata)
 
-	return response, nil
+	return &response, nil
 }
 
 func copyMaps(maps ...map[string]interface{}) map[string]interface{} {
@@ -139,7 +139,7 @@ func copyMaps(maps ...map[string]interface{}) map[string]interface{} {
 	return result
 }
 
-func prepareParams(dataDir string, outputDir string, request ResourceRequest) (map[string]interface{}, error) {
+func prepareParams(dataDir string, outputDir string, request *ResourceRequest) (map[string]interface{}, error) {
 	// Prepare the params to send to the commands
 	params := copyMaps(
 		request.Source.SmugglerParams,
@@ -163,8 +163,14 @@ func prepareParams(dataDir string, outputDir string, request ResourceRequest) (m
 	return params, nil
 }
 
-func prepareJsonRequest(request ResourceRequest) ([]byte, error) {
-	jsonRequest, err := json.Marshal(request.OrigRequest)
+func prepareJsonRequest(request *ResourceRequest) ([]byte, error) {
+	var jsonRequest []byte
+	var err error
+	if request.Source.FilterRawRequest {
+		jsonRequest, err = json.Marshal(request.FilteredRequest)
+	} else {
+		jsonRequest, err = json.Marshal(request.OrigRequest)
+	}
 	return jsonRequest, err
 }
 
