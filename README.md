@@ -16,18 +16,31 @@ existing resources, etc.
 You can easily register smuggler as a service by using
 [custom resource type definitions](https://concourse.ci/configuring-resource-types.html):
 
+First build the the container:
+
+```
+# A repository in dockerhub or other docker repository
+export SMUGGLER_DOCKER_TAG=<...your_docker_repository...>
+./scripts/build-docker
+```
+
+> We will eventually distribute some prebuilt images, but right now
+> is better you build your own.
+
 ```
 resource_types:
 - name: smuggler
   type: docker-image
   source:
-    repository: redfactorlabs/concourse-smuggler-resource#ubuntu-14.04
+    # Replace the url
+    repository: <...your_docker_repository...>
 ```
 
-Alternatively, you can build your own container image bundled with smuggler.
+Modify `Dockerfile` to build your own container image bundled with smuggler.
 
 As it is a unique static compiled binary it should work on any distribution
 with any tools and scripts you need to create your custom resource.
+
 See below for more details.
 
 ## Source configuration and tasks
