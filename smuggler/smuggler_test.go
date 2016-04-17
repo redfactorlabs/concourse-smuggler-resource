@@ -36,7 +36,7 @@ var _ = Describe("Check Command basic tests", func() {
 	Context("when given a basic config from a structure", func() {
 		request := ResourceRequest{
 			Source: SmugglerSource{
-				Commands: map[string]CommandDefinition{
+				Commands: map[string]interface{}{
 					"check": CommandDefinition{
 						Path: "bash",
 						Args: []string{"-e", "-c", "echo basic echo test"},

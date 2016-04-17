@@ -9,13 +9,10 @@ import (
 )
 
 type SmugglerSource struct {
-	CheckCommand     string                       `json:"check_command,omitempty"`
-	InCommand        string                       `json:"in_command,omitempty"`
-	OutCommand       string                       `json:"out_command,omitempty"`
-	Commands         map[string]CommandDefinition `json:"commands,omitempty"`
-	FilterRawRequest bool                         `json:"filter_raw_request,omitempty"`
-	SmugglerParams   map[string]interface{}       `json:"smuggler_params,omitempty"`
-	ExtraParams      map[string]interface{}       `json:"-"`
+	Commands         map[string]interface{} `json:"commands,omitempty"`
+	FilterRawRequest bool                   `json:"filter_raw_request,omitempty"`
+	SmugglerParams   map[string]interface{} `json:"smuggler_params,omitempty"`
+	ExtraParams      map[string]interface{} `json:"-"`
 }
 
 func WrapCommandWithShell(name string, commandLine string) *CommandDefinition {
@@ -44,25 +41,39 @@ func WrapCommandWithShell(name string, commandLine string) *CommandDefinition {
 	}
 }
 
-func (source SmugglerSource) FindCommand(name string) *CommandDefinition {
-	if name == "check" && source.CheckCommand != "" {
-		return WrapCommandWithShell(name, source.CheckCommand)
+func (source SmugglerSource) FindCommand(name string) (*CommandDefinition, error) {
+	cmd, ok := source.Commands[name]
+	if !ok {
+		return nil, nil
 	}
-	if name == "in" && source.InCommand != "" {
-		return WrapCommandWithShell(name, source.InCommand)
+	switch cmd := cmd.(type) {
+	case string:
+		return WrapCommandWithShell(name, cmd), nil
+	default:
+		c, err := NewCommandDefinition(cmd)
+		return c, err
 	}
-	if name == "out" && source.OutCommand != "" {
-		return WrapCommandWithShell(name, source.OutCommand)
-	}
-	if cmd, ok := source.Commands[name]; ok {
-		return &cmd
-	}
-	return nil
 }
 
 type CommandDefinition struct {
 	Path string   `json:"path"`
 	Args []string `json:"args,omitempty"`
+}
+
+func NewCommandDefinition(i interface{}) (*CommandDefinition, error) {
+	// Small hack to remap a interface{} to a struct
+	// Convert interface{} => json => struct
+	var b []byte
+	var c CommandDefinition
+	b, err := json.Marshal(i)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(b, &c)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
 }
 
 func (commandDefinition CommandDefinition) IsDefined() bool {

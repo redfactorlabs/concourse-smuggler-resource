@@ -40,12 +40,6 @@ resources:
 - name: my_smuggler_resource
   type: smuggler
   source:
-    # Optional quick one line definition of commands
-    check_command: "..."
-    in_command: "..."
-    out_command: "..."
-
-    # Multiline definition
     commands:
       check:
         path: <command>
@@ -55,10 +49,7 @@ resources:
         path: <command>
         args:
         - ...
-      out:
-        path: <command>
-        args:
-        - ...
+      out: "<command> <args>"
 
     filter_raw_request: true
 
@@ -97,21 +88,18 @@ jobs:
 
 The `source` configuraton includes:
 
- * `check_command`, `in_command`, `out_command`: short way to define the
-   commands `check/in/out` commands called from concourse to `check` new
+ * `commands`: definition of the
+   commands `check/in/out` called from concourse to `check` new
    versions and `get` or `put` resources.
 
-   Each one gets the command in one string which will shell out to
-   `bash -o -u -o pipefail -c <cmd>` or `sh -o -u -c <cmd>`.
+   It can be defined as:
 
-   If none of `bash` or `sh` is found, the command will be executed directly.
+    * Single string: Each one gets the command in one string which will
+      shell out to `bash -o -u -o pipefail -c <cmd>` or `sh -o -u -c <cmd>`.
+      If none of `bash` or `sh` is found, the command will be executed directly.
 
-   These definitions have precedence to the ones in `commands`.
-
- * `commands`: *Optional*. Detailed way to define commands.
-
-   Each command has a `path` and `args` similar to
-   [concourse task `run` definition](https://concourse.ci/running-tasks.html#run)
+    * as a hash of `path` and `args` similar to [concourse task
+      `run` definition](https://concourse.ci/running-tasks.html#run)
 
 > All commands are *optional*, and if not defined they will execute a
 > dummy operation (Of course you always want to define at least one ;)).
