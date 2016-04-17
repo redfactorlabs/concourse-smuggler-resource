@@ -2,7 +2,6 @@ package smuggler
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type SmugglerSource struct {
@@ -85,13 +84,22 @@ type RawResourceRequest struct {
 	Params  map[string]interface{} `json:"params,omitempty"`
 }
 
+func NewRawResourceRequest(jsonString string) (*RawResourceRequest, error) {
+	request := RawResourceRequest{}
+	err := json.Unmarshal([]byte(jsonString), &request)
+	if err != nil {
+		return nil, err
+	}
+	return &request, nil
+}
+
 type ResourceRequest struct {
 	Type            RequestType            `json:"-"`
 	Source          SmugglerSource         `json:"source,omitempty"`
 	Version         interface{}            `json:"version,omitempty"`
 	Params          map[string]interface{} `json:"params,omitempty"`
-	OrigRequest     RawResourceRequest     `json:"-"`
-	FilteredRequest RawResourceRequest     `json:"-"`
+	OrigRequest     *RawResourceRequest    `json:"-"`
+	FilteredRequest *RawResourceRequest    `json:"-"`
 }
 
 func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRequest, error) {
@@ -104,39 +112,27 @@ func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRe
 	if err != nil {
 		return nil, err
 	}
-	// Flatten the task params
-	m := request.Params["smuggler_params"]
-	if m != nil {
-		switch m := m.(type) {
-		case map[string]interface{}:
-			for k, v := range m {
-				request.Params[k] = v
-			}
-		default:
-			return nil, fmt.Errorf("Invalid format in task params 'smuggler_params', expected hash of key-value")
-		}
-		delete(request.Params, "smuggler_params")
-	}
 
 	// Populate the raw original request
-	rawRequest := RawResourceRequest{}
-	err = json.Unmarshal([]byte(jsonString), &rawRequest)
+	request.OrigRequest, err = NewRawResourceRequest(jsonString)
 	if err != nil {
 		return nil, err
 	}
-	request.OrigRequest = rawRequest
 
 	// Populate a filtered version of the request without the smuggler config
-	filteredRequest := RawResourceRequest{}
-	err = json.Unmarshal([]byte(jsonString), &filteredRequest)
-	delete(filteredRequest.Source, "commands")
-	delete(filteredRequest.Source, "smuggler_params")
-	delete(filteredRequest.Params, "smuggler_params")
-
-	request.FilteredRequest = filteredRequest
+	request.FilteredRequest, err = NewRawResourceRequest(jsonString)
+	if err != nil {
+		return nil, err
+	}
+	delete(request.FilteredRequest.Source, "commands")
+	delete(request.FilteredRequest.Source, "smuggler_params")
+	delete(request.FilteredRequest.Params, "smuggler_params")
 
 	// The fistered request source is the extra params for smuggler
-	request.Source.ExtraParams = request.FilteredRequest.Source
+	request.Source.ExtraParams = make(map[string]interface{})
+	for k, v := range request.FilteredRequest.Source {
+		request.Source.ExtraParams[k] = v
+	}
 
 	return &request, nil
 }

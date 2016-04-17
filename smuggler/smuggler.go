@@ -141,7 +141,7 @@ func copyMaps(maps ...map[string]interface{}) map[string]interface{} {
 
 func prepareParams(dataDir string, outputDir string, request ResourceRequest) (map[string]interface{}, error) {
 	// Prepare the params to send to the commands
-	params := copyMaps(request.Source.SmugglerParams, request.Params)
+	params := copyMaps(request.Source.SmugglerParams, request.Source.ExtraParams, request.Params)
 	params["ACTION"] = string(request.Type)
 	params["COMMAND"] = string(request.Type)
 	params["OUTPUT_DIR"] = outputDir

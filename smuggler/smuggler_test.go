@@ -215,16 +215,18 @@ var _ = Describe("SmugglerCommand params", func() {
 		runCommandFromFixture(requestType, dataDir, fixtureResourceName, "1.2.3")
 	})
 
-	Context("when executing a task with `smuggler_params` in the params", func() {
+	Context("when executing a task with a mix of `smuggler_params` in the params", func() {
 		BeforeEach(func() {
 			requestType = InType
-			fixtureResourceName = "complex_command"
+			fixtureResourceName = "mix_params"
 		})
 
-		It("should get those params as environment variables", func() {
-			Ω(command.LastCommandOutput).Should(ContainSubstring("param6=an additional param"))
+		It("should get all the params as environment variables", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param1=smuggler_val1"))
+			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param2=smuggler_val2"))
+			Ω(command.LastCommandOutput).Should(ContainSubstring("non_smuggler_param1=non_smuggler_val1"))
+			Ω(command.LastCommandOutput).Should(ContainSubstring("non_smuggler_param2=non_smuggler_val2"))
 		})
-
 	})
 })
 

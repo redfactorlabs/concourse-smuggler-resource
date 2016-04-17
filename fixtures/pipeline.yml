@@ -138,6 +138,34 @@ resources:
         }
         EOF
 
+- name: mix_params
+  type: smuggler
+  source:
+    smuggler_params:
+      smuggler_param1: smuggler_val1
+    non_smuggler_param1: non_smuggler_val1
+    commands:
+    - name: in
+      path: bash
+      args:
+      - -e
+      - -c
+      - |
+        echo Command Start
+        echo "action=${SMUGGLER_ACTION}"
+        echo "command=${SMUGGLER_COMMAND}"
+        echo "smuggler_param1=${SMUGGLER_smuggler_param1}"
+        echo "non_smuggler_param1=${SMUGGLER_non_smuggler_param1}"
+        echo "smuggler_param2=${SMUGGLER_smuggler_param2}"
+        echo "non_smuggler_param2=${SMUGGLER_non_smuggler_param2}"
+        echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
+        echo Command End 1>&2
+
+# Like mix_params without smuggler config
+- name: mix_params_filtered
+  type: smuggler
+  source:
+    non_smuggler_param1: non_smuggler_val1
 
 jobs:
   - name: a_job
@@ -159,5 +187,13 @@ jobs:
             with: "keys"
             and: [ "other", "complex" ]
             structures: { like: "this" }
+      - get: mix_params
+        params:
+          smuggler_params:
+            smuggler_param2: smuggler_val2
+          non_smuggler_param2: non_smuggler_val2
+      - get: mix_params_filtered
+        params:
+          non_smuggler_param2: non_smuggler_val2
 
 
