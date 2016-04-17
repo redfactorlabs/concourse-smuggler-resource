@@ -12,6 +12,8 @@ import (
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource/helpers/test"
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
+
+	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 )
 
 var pipeline_yml = Fixture("../fixtures/pipeline.yml")
@@ -225,6 +227,20 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 				Ω(r.Source.ExtraParams).ShouldNot(BeEmpty())
 				Ω(r.Params.SmugglerParams).Should(BeEmpty())
 				Ω(r.Params.ExtraParams).ShouldNot(BeEmpty())
+			})
+			It("we the filtered request has not any of the smuggler fields", func() {
+				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
+				Ω(err).ShouldNot(HaveOccurred())
+
+				r, err := NewRawResourceRequest(string(b))
+				Ω(err).ShouldNot(HaveOccurred())
+
+				for _, t := range utils.ListJsonTagsOfStruct(request.Source) {
+					Ω(r.Source).ShouldNot(HaveKey(t))
+				}
+				for _, t := range utils.ListJsonTagsOfStruct(request.Params) {
+					Ω(r.Params).ShouldNot(HaveKey(t))
+				}
 			})
 		})
 		Context("when given a config with a command which writes the json response to stdout", func() {

@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"reflect"
+	"strings"
 
 	"github.com/mitchellh/colorstring"
 )
@@ -79,4 +81,17 @@ func Copy(src, dst string) error {
 		return err
 	}
 	return cerr
+}
+
+// List the json tag names (`json:"name,opts"`)   of a struct
+func ListJsonTagsOfStruct(x interface{}) []string {
+	v := reflect.TypeOf(x)
+	tags := make([]string, v.NumField())
+
+	for i := 0; i < v.NumField(); i++ {
+		t := v.Field(i).Tag.Get("json")
+		t = strings.SplitN(t, ",", 2)[0]
+		tags = append(tags, t)
+	}
+	return tags
 }
