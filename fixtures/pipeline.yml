@@ -239,6 +239,17 @@ resources:
           echo "1.2.3" > ${SMUGGLER_OUTPUT_DIR}/versions
           echo Command End 1>&2
 
+- name: a_quiet_command
+  type: smuggler
+  source:
+    smuggler_params:
+      param1: 1
+    param2: 2
+    commands:
+      check: "true"
+      in: "true"
+      out: "true"
+
 jobs:
   - name: a_job
     plan:
@@ -286,3 +297,8 @@ jobs:
             param1: params.smuggler_params
             param2: params.smuggler_params
           param1: params
+      - get: a_quiet_command
+        params:
+          smuggler_params:
+            param3: 3
+          param4: 4

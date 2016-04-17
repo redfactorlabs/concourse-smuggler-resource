@@ -110,5 +110,6 @@ source:
   * [ ] bzr/subversion/any CVS...
   * [ ] good archive resource (examples combining it with S3)
   * [ ] FTP resource
-  * [ ] Wrap other resources and do string interpolation in their parameters. For instance query a key/value store, with other resource to set variables :).
+  * [ ] Wrap other resources and do string interpolation in their parameters.
+        For instance query a key/value store, with other resource to set variables :).
 
