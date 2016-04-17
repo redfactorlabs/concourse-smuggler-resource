@@ -73,11 +73,15 @@ source:
  * [X] Pass request down to the command
  * [X] Read from stdout the response
  * [X] Generic request and response
- * [ ] ... test the flatten params, filtering, etc. (last 2x commits)
- * [ ] Filter the request to the command
+ * [X] Filter the request to the command
+ * [ ] ... Auto filter params
+ * [ ] ... test that filtered params are not passed
+ * [ ] ... Test complex parameters with json
+ * [ ] ... Test override of params
  * [ ] Add some examples to README.md
  * [ ] Optional redirect all output to stderr.
  * [ ] Print output to console, at least on error.
+ * [ ] One line shell commands
  * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
  * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
  * [ ] Write raw requests and read raw responses as json from `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`
@@ -92,6 +96,12 @@ source:
  * [ ] add `source.default_check_version` to keep check version constant
  * [ ] Better error messages if config syntax is not right: Currently: `error reading request from stdin: json: cannot unmarshal object into Go value of type []smuggler.CommandDefinition
 [0m`
+ * [ ] Metadata file lines with json?
+
+# Future ideas
+
+ * [ ] Library to implement resources
+ * [ ] Hooks for smuggler
 
 # Smuggling ideas
 

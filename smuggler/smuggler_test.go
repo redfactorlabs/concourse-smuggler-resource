@@ -174,20 +174,59 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 				os.RemoveAll(dataDir)
 			})
 
-			It("the command we find the same request destiation dir", func() {
+			It("we find the same request destination dir", func() {
 				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
 				Ω(err).ShouldNot(HaveOccurred())
 
-				b_orig, err := json.Marshal(&request)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(b).Should(MatchJSON(b_orig))
+				Ω(b).Should(MatchJSON(requestJson))
 
 				r, err := NewResourceRequest(request.Type, string(b))
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(r).Should(BeEquivalentTo(request))
+
+				Ω(r.Source.Commands).ShouldNot(BeEmpty())
+				Ω(r.Source.FilterRawRequest).ShouldNot(BeTrue())
+				Ω(r.Source.SmugglerParams).ShouldNot(BeEmpty())
+				Ω(r.Source.ExtraParams).ShouldNot(BeEmpty())
+				Ω(r.Params.SmugglerParams).ShouldNot(BeEmpty())
+				Ω(r.Params.ExtraParams).ShouldNot(BeEmpty())
 			})
 		})
 
+		Context("when a command reads and dumps the filtered request from stdin", func() {
+			BeforeEach(func() {
+				dataDir, err = ioutil.TempDir("", "destination_dir")
+				Ω(err).ShouldNot(HaveOccurred())
+
+				fixtureResourceName = "dump_filtered_request_from_stdin"
+			})
+			AfterEach(func() {
+				os.RemoveAll(dataDir)
+			})
+
+			It("we find a filtered request in the destination dir", func() {
+				b, err := ioutil.ReadFile(filepath.Join(dataDir, "stdin.json"))
+				Ω(err).ShouldNot(HaveOccurred())
+
+				Ω(b).ShouldNot(MatchJSON(requestJson))
+
+				b_filtered, err := json.Marshal(&request.FilteredRequest)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(b).Should(MatchJSON(b_filtered))
+
+				r, err := NewResourceRequest(request.Type, string(b))
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(r.OrigRequest).Should(BeEquivalentTo(request.FilteredRequest))
+
+				Ω(r.Source.Commands).Should(BeEmpty())
+				// default if missing is false
+				Ω(r.Source.FilterRawRequest).Should(BeFalse())
+				Ω(r.Source.SmugglerParams).Should(BeEmpty())
+				Ω(r.Source.ExtraParams).ShouldNot(BeEmpty())
+				Ω(r.Params.SmugglerParams).Should(BeEmpty())
+				Ω(r.Params.ExtraParams).ShouldNot(BeEmpty())
+			})
+		})
 		Context("when given a config with a command which writes the json response to stdout", func() {
 			BeforeEach(func() {
 				fixtureResourceName = "write_response_to_stdout"

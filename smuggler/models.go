@@ -5,9 +5,10 @@ import (
 )
 
 type SmugglerSource struct {
-	Commands       []CommandDefinition    `json:"commands,omitempty"`
-	SmugglerParams map[string]interface{} `json:"smuggler_params,omitempty"`
-	ExtraParams    map[string]interface{} `json:"-"`
+	Commands         []CommandDefinition    `json:"commands,omitempty"`
+	FilterRawRequest bool                   `json:"filter_raw_request,omitempty"`
+	SmugglerParams   map[string]interface{} `json:"smuggler_params,omitempty"`
+	ExtraParams      map[string]interface{} `json:"-"`
 }
 
 func (source SmugglerSource) FindCommand(name string) *CommandDefinition {
@@ -94,12 +95,17 @@ func NewRawResourceRequest(jsonString string) (*RawResourceRequest, error) {
 }
 
 type ResourceRequest struct {
-	Type            RequestType            `json:"-"`
-	Source          SmugglerSource         `json:"source,omitempty"`
-	Version         interface{}            `json:"version,omitempty"`
-	Params          map[string]interface{} `json:"params,omitempty"`
-	OrigRequest     *RawResourceRequest    `json:"-"`
-	FilteredRequest *RawResourceRequest    `json:"-"`
+	Type            RequestType         `json:"-"`
+	Source          SmugglerSource      `json:"source,omitempty"`
+	Version         interface{}         `json:"version,omitempty"`
+	Params          TaskParams          `json:"params,omitempty"`
+	OrigRequest     *RawResourceRequest `json:"-"`
+	FilteredRequest *RawResourceRequest `json:"-"`
+}
+
+type TaskParams struct {
+	SmugglerParams map[string]interface{} `json:"smuggler_params,omitempty"`
+	ExtraParams    map[string]interface{} `json:"-"`
 }
 
 func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRequest, error) {
@@ -125,13 +131,20 @@ func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRe
 		return nil, err
 	}
 	delete(request.FilteredRequest.Source, "commands")
+	delete(request.FilteredRequest.Source, "filter_raw_request")
 	delete(request.FilteredRequest.Source, "smuggler_params")
 	delete(request.FilteredRequest.Params, "smuggler_params")
 
-	// The fistered request source is the extra params for smuggler
+	// The filtered request source is the extra params for smuggler source
 	request.Source.ExtraParams = make(map[string]interface{})
 	for k, v := range request.FilteredRequest.Source {
 		request.Source.ExtraParams[k] = v
+	}
+
+	// The filtered request params is the extra params for smuggler params
+	request.Params.ExtraParams = make(map[string]interface{})
+	for k, v := range request.FilteredRequest.Params {
+		request.Params.ExtraParams[k] = v
 	}
 
 	return &request, nil

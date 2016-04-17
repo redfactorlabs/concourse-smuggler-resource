@@ -141,7 +141,12 @@ func copyMaps(maps ...map[string]interface{}) map[string]interface{} {
 
 func prepareParams(dataDir string, outputDir string, request ResourceRequest) (map[string]interface{}, error) {
 	// Prepare the params to send to the commands
-	params := copyMaps(request.Source.SmugglerParams, request.Source.ExtraParams, request.Params)
+	params := copyMaps(
+		request.Source.SmugglerParams,
+		request.Source.ExtraParams,
+		request.Params.SmugglerParams,
+		request.Params.ExtraParams,
+	)
 	params["ACTION"] = string(request.Type)
 	params["COMMAND"] = string(request.Type)
 	params["OUTPUT_DIR"] = outputDir
@@ -153,22 +158,6 @@ func prepareParams(dataDir string, outputDir string, request ResourceRequest) (m
 		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
 	case "out":
 		params["SOURCES_DIR"] = dataDir
-	}
-
-	// Flatten the task params by copying the ones under `smuggler_params`
-	m := params["smuggler_params"]
-	if m != nil {
-		switch m := m.(type) {
-		case map[string]interface{}:
-			for k, v := range m {
-				if params[k] == nil {
-					params[k] = v
-				}
-			}
-		default:
-			return nil, fmt.Errorf("Invalid format in task params 'smuggler_params', expected hash of key-value")
-		}
-		delete(params, "smuggler_params")
 	}
 
 	return params, nil

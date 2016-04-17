@@ -14,7 +14,7 @@ var _ = Describe("ResourceRequest", func() {
 
 	It("Decoding and encoding a string with json results in the same string", func() {
 		var r *ResourceRequest
-		s := `{"source":{"commands":[{"name":"in","path":"env"}]},"version":"1.2.3"}`
+		s := `{"source":{"commands":[{"name":"in","path":"env"}]},"version":"1.2.3","params":{}}`
 
 		r, err := NewResourceRequest(InType, s)
 		Ω(err).ShouldNot(HaveOccurred())
@@ -29,9 +29,9 @@ var _ = Describe("ResourceRequest", func() {
 		b, err := r.ToJson()
 
 		Ω(err).ShouldNot(HaveOccurred())
-		Ω(b).Should(BeEquivalentTo(`{"source":{},"version":"1.2.3"}`))
+		Ω(b).Should(BeEquivalentTo(`{"source":{},"version":"1.2.3","params":{}}`))
 	})
-	It("populates the Source.ExtraParams with any non predefined parameter", func() {
+	It("populates the Source.ExtraParams with any additional parameter", func() {
 		json, err := pipeline.JsonRequest(InType, "mix_params", "a_job", "1.2.3")
 		Ω(err).ShouldNot(HaveOccurred())
 
@@ -39,6 +39,15 @@ var _ = Describe("ResourceRequest", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Ω(request.Source.ExtraParams).Should(HaveKey("non_smuggler_param1"))
+	})
+	It("populates the Params.ExtraParams with any additional parameter", func() {
+		json, err := pipeline.JsonRequest(InType, "mix_params", "a_job", "1.2.3")
+		Ω(err).ShouldNot(HaveOccurred())
+
+		request, err := NewResourceRequest(InType, json)
+		Ω(err).ShouldNot(HaveOccurred())
+
+		Ω(request.Params.ExtraParams).Should(HaveKey("non_smuggler_param2"))
 	})
 	It("populates the OrigRequest attribute", func() {
 		json, err := pipeline.JsonRequest(InType, "mix_params", "a_job", "1.2.3")
