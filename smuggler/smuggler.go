@@ -82,7 +82,11 @@ func (command *SmugglerCommand) RunAction(dataDir string, request *ResourceReque
 		Type: request.Type,
 	}
 
-	commandDefinition := request.Source.FindCommand(string(request.Type))
+	commandDefinition, err := request.Source.FindCommand(string(request.Type))
+	if err != nil {
+		return &response, err
+	}
+
 	if commandDefinition == nil {
 		command.logger.Printf("[INFO] No command definition, skipping")
 		return &response, nil

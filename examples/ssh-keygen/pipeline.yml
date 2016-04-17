@@ -1,4 +1,5 @@
 ---
+# Load smuggler as a new resource
 resource_types:
 - name: smuggler
   type: docker-image
@@ -6,31 +7,22 @@ resource_types:
     repository: redfactorlabs/concourse-smuggler-resource
     tag: ubuntu-14.04
 
+# Define the ssh-keygen resource, which will generate a key every time a get
+# is called.
 resources:
 - name: ssh-keygen
   type: smuggler
   source:
     commands:
-    - name: check
-      path: sh
-      args:
-      - -e
-      - -u
-      - -c
-      - |
-        echo constant > ${SMUGGLER_OUTPUT_DIR}/versions
-    - name: in
-      path: sh
-      args:
-      - -e
-      - -u
-      - -c
-      - |
-        ssh-keygen -f ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} -N ''
-        cat ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} |\
-          shasum | cut -f 1 -d " " > ${SMUGGLER_OUTPUT_DIR}/versions
+      # Check always returns a constant version
+      check: echo constant > ${SMUGGLER_OUTPUT_DIR}/versions
+      # In generates the ssh key and reports the shasum as the version
+      in: |
+          ssh-keygen -f ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} -N ''
+          cat ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name} |\
+            shasum | cut -f 1 -d " " > ${SMUGGLER_OUTPUT_DIR}/versions
 
-
+# A sample pipeline
 jobs:
 - name: do_something_with_ssh
   serial: true

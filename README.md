@@ -16,18 +16,31 @@ existing resources, etc.
 You can easily register smuggler as a service by using
 [custom resource type definitions](https://concourse.ci/configuring-resource-types.html):
 
+First build the container:
+
+```
+# A repository in dockerhub or other docker repository
+export SMUGGLER_DOCKER_TAG=<...your_docker_repository...>
+./scripts/build-docker
+```
+
+> We will eventually distribute some prebuilt images, but right now
+> is better you build your own.
+
 ```
 resource_types:
 - name: smuggler
   type: docker-image
   source:
-    repository: redfactorlabs/concourse-smuggler-resource#ubuntu-14.04
+    # Replace the url
+    repository: <...your_docker_repository...>
 ```
 
-Alternatively, you can build your own container image bundled with smuggler.
+Modify `Dockerfile` to build your own container image bundled with smuggler.
 
 As it is a unique static compiled binary it should work on any distribution
 with any tools and scripts you need to create your custom resource.
+
 See below for more details.
 
 ## Source configuration and tasks
@@ -41,18 +54,15 @@ resources:
   type: smuggler
   source:
     commands:
-    - name: check
-      path: <command>
-      args:
-      - ...
-    - name: in
-      path: <command>
-      args:
-      - ...
-    - name: out
-      path: <command>
-      args:
-      - ...
+      check:
+        path: <command>
+        args:
+        - ...
+      in:
+        path: <command>
+        args:
+        - ...
+      out: "<command> <args>"
 
     filter_raw_request: true
 
@@ -91,13 +101,21 @@ jobs:
 
 The `source` configuraton includes:
 
- * `commands`: *Optional*. Each command definition for `check/in/out` commands
-   called from concourse to `check` new versions and `get` or `put` resources.
-   Each command has a `path` and `args` similar to
-   [concourse task `run` definition](https://concourse.ci/running-tasks.html#run)
+ * `commands`: definition of the
+   commands `check/in/out` called from concourse to `check` new
+   versions and `get` or `put` resources.
 
-   All commands are *optional*, and if not defined they will execute a
-   dummy operation (Of course you always want to define at least one ;)).
+   It can be defined as:
+
+    * Single string: Each one gets the command in one string which will
+      shell out to `bash -o -u -o pipefail -c <cmd>` or `sh -o -u -c <cmd>`.
+      If none of `bash` or `sh` is found, the command will be executed directly.
+
+    * as a hash of `path` and `args` similar to [concourse task
+      `run` definition](https://concourse.ci/running-tasks.html#run)
+
+> All commands are *optional*, and if not defined they will execute a
+> dummy operation (Of course you always want to define at least one ;)).
 
  * `filter_raw_request`: Filter the smuggler specific config from the
    verbatin json request passed via `stdin` to the commands.
@@ -170,6 +188,8 @@ Output to send to concourse to the commands:
     request [as described in the implementing concourse resources documentation.]
     (https://concourse.ci/implementing-resources.html)
 
+> **Note** if you print to stdout and it is not JSON, the output will be discarded.
+
  * `${SMUGGLER_OUTPUT_DIR}/versions`: For `check/in`.
    * **Optional**, only processed if no json is written in `stdout`.
    * For `check`: Your command **must** write here the versions found, one line per version.
@@ -188,9 +208,6 @@ Output to send to concourse to the commands:
      passed to the command. Only the first line will be taken into account.
    * If each line is a valid JSON, they will be interpreted.
 
-> You **must** write some output for `check` via verbatin JSON in `stdin` or
-> `${SMUGGLER_OUTPUT_DIR}/versions`.
-
 ### `check` Find out what you want to smuggle
 
 Will execute the command configured as `check`.
@@ -206,7 +223,7 @@ You can smuggle even more if you use inline scripts included as
 in your command definition:
 
 ```
-- name: check
+check:
   path: sh
   args:
   # sh reads commands from next argument with -c
@@ -229,45 +246,35 @@ resources:
   type: smuggler
   source:
     commands:
-    - name: out
-      path: sh
-      path: <command>
-      args:
-      - -e
-      - -c
-      - |
-        ssh-keygen -f id_rsa -N ''
-        tar -cvzf $SMUGGLER_DESTINATION_DIR/id_rsa.tar.gz id_rsa id_rsa.tgz
+      out:
+        path: sh
+        path: <command>
+        args:
+        - -e
+        - -c
+        - |
+          ssh-keygen -f id_rsa -N ''
+          tar -cvzf $SMUGGLER_DESTINATION_DIR/id_rsa.tar.gz id_rsa id_rsa.tgz
 ```
- * `python`: TODO
-   ```
-python -c '
-friends = ["john", "pat", "gary", "michael"]
-for i, name in enumerate(friends):
-    print "iteration {iteration} is {name}".format(iteration=i, name=name)
-'
-```
- * `ruby`: TODO
 
 # Advanced usage
 
 ## Bundle smuggler configuration in `/opt/resource/smuggler.yml` in resource image
 
-You can optionally write all the configuration of the `source` section of
-the resource in the resource container image, in `/opt/resource/smuggler.yml`.
+You can optionally write the same configuration of the `source` section in
+the resource container image, in `/opt/resource/smuggler.yml`.
 
-You can still specify any parameter and command in the pipeline, and they will
-override the ones defined in `smuggler.yml` and passed to the commands as
-expected.
+The content of that file will be merged with the request, so that any parameter
+and command defined in the pipeline, will override the ones defined in
+`smuggler.yml`.
 
-This would allow you to encapsulate all the implementation and not expose
-it in the pipelines.
-
-You can also distribute the images as a ready to use resource.
+This enables you to encapsulate all the implementation and not expose
+it in the pipelines, keeping the pipeline simple and letting you to
+distribute and reuse the resource as desired.
 
 ## Wrapping other resources with smuggler
 
-You can read the raw JSON request from concourse from `stdin`, and write
+As mention, you can read the raw JSON request from concourse from `stdin`, and write
 it directly the response to `stdout`. Additionally, with `source.filter_raw_request`
 all the smuggler config will be removed from the resquest.
 
@@ -287,61 +294,58 @@ For example, to use S3 to store generated keys with `ssh-keygen`:
     secret_access_key: SECRET
 
     commands:
-    - name: check
-      path: bash
-      args:
-      - -c
-      - -e
-      - |
-        if [ -z "$SMUGGLER_VERSION_ID" ] &&
-          # First time we will generate the key
-          echo "initial" > ${SMUGGLER_OUTPUT_DIR}/versions
-        else
-          /opt/resource/wrapped_resource/s3/check
-        fi
-    - name: in
-      path: bash
-      args:
-      - -c
-      - -e
-      - |
-        if [ "$SMUGGLER_VERSION_ID" == "initial" ] &&
-          # First time we will generate the key
-          ssh-keygen -f id_rsa -N ''
-          tar -czf ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file} id_rsa id_rsa.pub
+      check:
+        path: bash
+        args:
+        - -c
+        - -e
+        - |
+          if [ -z "$SMUGGLER_VERSION_ID" ] &&
+            # First time we will generate the key
+            echo "initial" > ${SMUGGLER_OUTPUT_DIR}/versions
+          else
+            /opt/resource/wrapped_resource/s3/check
+          fi
+      in:
+        path: bash
+        args:
+        - -c
+        - -e
+        - |
+          if [ "$SMUGGLER_VERSION_ID" == "initial" ] &&
+            # First time we will generate the key
+            ssh-keygen -f id_rsa -N ''
+            tar -czf ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file} id_rsa id_rsa.pub
 
-          # And the upload the key with an out command.
-          #
-          # The out command will read the "in" request from stdin and
-          # write a response to stdout both they are compatible
-          #
+            # And the upload the key with an out command.
+            #
+            # The out command will read the "in" request from stdin and
+            # write a response to stdout both they are compatible
+            #
+            /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
+          else
+            /opt/resource/wrapped_resource/s3/in ${SMUGGLER_DESTINATION_DIR}
+          fi
+      out:
+        path: bash
+        args:
+        - -c
+        - -e
+        - |
           /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
-        else
-          /opt/resource/wrapped_resource/s3/in ${SMUGGLER_DESTINATION_DIR}
-        fi
-    - name: out
-      path: bash
-      args:
-      - -c
-      - -e
-      - |
-        /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
 
 ```
 
-## Smuggler as framework for new resources
+# Examples
 
-TODO ... explain config.yml
+Check [the examples directory](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples)
+for examples of hacks and resources.
 
-## Examples
+# Contributions
 
-TODO
+Smuggling is fun! Share it! Send over or comment us your hacks and implementations.
 
-## Contributions
-
-Smuggling is fun, share it! Send over or comment us your hacks and implementations.
-
-## Credits
+# Credits
 
 I stoled a lot of code around in github, specially from other resources
 like `s3-resource`. Thanks to all of you!

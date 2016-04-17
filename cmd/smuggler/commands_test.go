@@ -283,6 +283,17 @@ var _ = Describe("smuggler commands", func() {
 		})
 	})
 
+	Context("when running a quiet command", func() {
+		Context("when running 'check'", func() {
+			BeforeEach(func() {
+				commandPath, jsonRequest = prepareCommandCheck("a_quiet_command")
+			})
+			It("There are no messages in Stderr", func() {
+				Ω(session.Err.Contents()).To(BeEmpty())
+			})
+		})
+	})
+
 })
 
 func getJsonRequest(t RequestType, resourceName string) string {

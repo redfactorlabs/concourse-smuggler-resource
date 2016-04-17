@@ -74,21 +74,15 @@ source:
  * [X] Read from stdout the response
  * [X] Generic request and response
  * [X] Filter the request to the command
- * [ ] ... Auto filter params
- * [ ] ... test that filtered params are not passed
- * [ ] ... Test complex parameters with json
- * [ ] ... Test override of params
- * [ ] Add some examples to README.md
- * [ ] Optional redirect all output to stderr.
- * [ ] Print output to console, at least on error.
- * [ ] One line shell commands
- * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
- * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
- * [ ] Write raw requests and read raw responses as json from `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`
+ * [X] One line shell commands
+ * [X] Add some examples to README.md
+ * ~~[ ] Wrap other resources~~ can be implemented easily
+ * ~~[ ] Write raw requests and read raw responses as json from
+   `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`~~
+    I will document use `cat > file` if required.
 
 # Desired
 
- * [ ] Wrap other resources
  * [ ] Resource to "Inject smuggler" in other images, based in smuggler
  * [ ] smuggler for go inline code :)
  * [ ] autobuild docker
@@ -97,6 +91,9 @@ source:
  * [ ] Better error messages if config syntax is not right: Currently: `error reading request from stdin: json: cannot unmarshal object into Go value of type []smuggler.CommandDefinition
 [0m`
  * [ ] Metadata file lines with json?
+ * [ ] Stdout/Stderr is captured and printed immediatelly (e.g. https://github.com/kvz/logstreamer)
+ * [ ] Optional redirect all output to stderr.
+ * [ ] Options how to capture stdout/stderr: "both-prefix|both|stdout|stderr"
 
 # Future ideas
 
@@ -111,5 +108,6 @@ source:
   * [ ] bzr/subversion/any CVS...
   * [ ] good archive resource (examples combining it with S3)
   * [ ] FTP resource
-  * [ ] Wrap other resources and do string interpolation in their parameters. For instance query a key/value store, with other resource to set variables :).
+  * [ ] Wrap other resources and do string interpolation in their parameters.
+        For instance query a key/value store, with other resource to set variables :).
 

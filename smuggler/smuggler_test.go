@@ -36,9 +36,8 @@ var _ = Describe("Check Command basic tests", func() {
 	Context("when given a basic config from a structure", func() {
 		request := ResourceRequest{
 			Source: SmugglerSource{
-				Commands: []CommandDefinition{
-					CommandDefinition{
-						Name: "check",
+				Commands: map[string]interface{}{
+					"check": CommandDefinition{
 						Path: "bash",
 						Args: []string{"-e", "-c", "echo basic echo test"},
 					},
@@ -58,13 +57,12 @@ var _ = Describe("Check Command basic tests", func() {
 	Context("when given a basic config from a json", func() {
 		requestJson := `{
 			"source": {
-				"commands": [
-					{
-						"name": "check",
+				"commands": {
+					"check": {
 						"path": "sh",
 						"args": [ "-e", "-c", "echo basic echo test" ]
 					}
-				]
+				}
 			},
 			"version": {}
 		}`
@@ -322,6 +320,44 @@ var _ = Describe("SmugglerCommand params", func() {
 			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param2=params.smuggler_params"))
 			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param3=source"))
 			Ω(command.LastCommandOutput).Should(ContainSubstring("smuggler_param4=source.smuggler_params"))
+		})
+	})
+
+})
+
+var _ = Describe("SmugglerCommand one line commands", func() {
+	BeforeEach(func() {
+		dataDir = "/some/path"
+	})
+	JustBeforeEach(func() {
+		runCommandFromFixture(requestType, dataDir, fixtureResourceName, "1.2.3")
+	})
+
+	Context("When executing a in command", func() {
+		BeforeEach(func() {
+			requestType = CheckType
+			fixtureResourceName = "one_line_commands"
+		})
+		It("should execute the one line version of the command", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("Inline command for check"))
+		})
+	})
+	Context("When executing a in command", func() {
+		BeforeEach(func() {
+			requestType = InType
+			fixtureResourceName = "one_line_commands"
+		})
+		It("should execute the one line version of the command", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("Inline command for in"))
+		})
+	})
+	Context("When executing a out command", func() {
+		BeforeEach(func() {
+			requestType = OutType
+			fixtureResourceName = "one_line_commands"
+		})
+		It("should execute the one line version of the command", func() {
+			Ω(command.LastCommandOutput).Should(ContainSubstring("Inline command for out"))
 		})
 	})
 
