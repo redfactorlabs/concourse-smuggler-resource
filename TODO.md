@@ -78,10 +78,12 @@ source:
  * [X] Fix config.yml with filtering
  * [X] Test no noise is print to stderr
  * [X] Add some examples to README.md
+ * [ ] Fix types of Version https://github.com/concourse/atc/blob/master/resource_types.go#L7
  * ~~[ ] Wrap other resources~~ can be implemented easily
  * ~~[ ] Write raw requests and read raw responses as json from
    `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`~~
     I will document use `cat > file` if required.
+ * [ ] Fix: When non matching json printed to stdout it should fail and return error.
 
 # Desired
 

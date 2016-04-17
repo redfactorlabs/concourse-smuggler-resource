@@ -156,10 +156,10 @@ func prepareParams(dataDir string, outputDir string, request *ResourceRequest) (
 	params["OUTPUT_DIR"] = outputDir
 	switch request.Type {
 	case "check":
-		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
+		params["VERSION_ID"] = request.Version.ToString()
 	case "in":
 		params["DESTINATION_DIR"] = dataDir
-		params["VERSION_ID"] = InterfaceToJsonString(request.Version)
+		params["VERSION_ID"] = request.Version.ToString()
 	case "out":
 		params["SOURCES_DIR"] = dataDir
 	}
@@ -222,13 +222,19 @@ func populateResponseFromOutputDir(outputDir string, request *ResourceRequest, r
 	return nil
 }
 
-func readVersions(versionsFile string) ([]interface{}, error) {
-	result := []interface{}{}
+func readVersions(versionsFile string) ([]Version, error) {
+	result := []Version{}
+
+	result = make([]Version, 0)
 	if versionLines, err := readAndTrimAllLines(versionsFile); err != nil {
 		return result, err
 	} else {
 		for _, l := range versionLines {
-			result = append(result, JsonStringToInterface(l))
+			v, err := NewVersion(l)
+			if err != nil {
+				return result, err
+			}
+			result = append(result, *v)
 		}
 	}
 	return result, nil

@@ -150,7 +150,7 @@ resources:
         - |
           cat <<EOF
           {
-            "version": "3.2.1",
+            "version": { "ref": "3.2.1" },
             "metadata": [
               { "name": "value_from_json", "value": "something" },
               { "name": "other_value_from_json", "value": "otherthing" }
