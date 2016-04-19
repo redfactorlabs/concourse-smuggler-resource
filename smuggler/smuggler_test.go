@@ -161,6 +161,22 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 		runCommandFromFixture(requestType, dataDir, fixtureResourceName, "1.2.3")
 	})
 
+	Context("when calling action 'check'", func() {
+		BeforeEach(func() {
+			requestType = CheckType
+		})
+		Context("when given a config with a command which writes the json response to stdout", func() {
+			BeforeEach(func() {
+				fixtureResourceName = "write_response_to_stdout"
+			})
+			It("it returns the version IDs", func() {
+				vs, err := NewVersions([]string{"3.2.1", "3.2.2"})
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(response.Versions).Should(Equal(vs))
+			})
+		})
+	})
+
 	Context("when calling action 'in'", func() {
 		BeforeEach(func() {
 			requestType = InType

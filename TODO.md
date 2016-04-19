@@ -76,6 +76,7 @@ source:
  * [X] Filter the request to the command
  * [X] One line shell commands
  * [X] Add some examples to README.md
+ * [X] Fix reading version from stdout in check
  * ~~[ ] Wrap other resources~~ can be implemented easily
  * ~~[ ] Write raw requests and read raw responses as json from
    `SMUGGLER_INPUT_DIR` and `SMUGGLER_OUTPUT_DIR`~~

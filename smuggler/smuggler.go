@@ -182,14 +182,22 @@ func prepareJsonRequest(request *ResourceRequest) ([]byte, error) {
 // Tries to populate the response from the stdout
 //
 func populateResponseFromStdoutAsJson(stdout []byte, request *ResourceRequest, response *ResourceResponse) error {
-	var r ResourceResponse
-	err := json.Unmarshal(stdout, &r)
-	if err != nil {
-		return err
+
+	if response.Type == CheckType {
+		err := json.Unmarshal(stdout, &(*response).Versions)
+		if err != nil {
+			return err
+		}
+	} else {
+		var r ResourceResponse
+		err := json.Unmarshal(stdout, &r)
+		if err != nil {
+			return err
+		}
+		// Copy all the new values but the type to the response
+		r.Type = response.Type
+		*response = r
 	}
-	// Copy all the new values but the type to the response
-	r.Type = response.Type
-	*response = r
 	return nil
 }
 
