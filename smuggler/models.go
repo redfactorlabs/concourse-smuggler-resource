@@ -124,7 +124,7 @@ type ResourceRequest struct {
 type Version map[string]string
 
 func (v Version) ToString() string {
-	if id, ok := v["ref"]; ok {
+	if id, ok := v["ID"]; ok {
 		return id
 	}
 	b, err := json.Marshal(v)
@@ -142,7 +142,7 @@ func NewVersion(s string) (*Version, error) {
 		switch err.(type) {
 		case *json.SyntaxError:
 			v = make(Version)
-			v["ref"] = s
+			v["ID"] = s
 		default:
 			return nil, err
 		}

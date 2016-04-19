@@ -160,8 +160,12 @@ Each command will get some input via environment variables or `stdin`:
    For `in/out` will also include the parameters under `params.smuggler_params`
    or `params`
 
- * `SMUGGLER_VERSION_ID`: For `check/in` Environment variable with the latest
-   resource version. It will be a empty string in the first run of `check`
+ * `SMUGGLER_VERSION_<key>`: For `check/in` Environment variable with the latest
+   resource version, one version per key-value pair in the version.
+   They will not be defined if it is first run of `check`.
+
+ * `SMUGGLER_VERSION_ID`: Default version variable when using plain string
+   versions (see below for output details).
 
  * `SMUGGLER_OUTPUT_DIR`: For `check/in/out`. The directory path to write the
    resulting versions and metadata when not using `stdout`.
@@ -192,10 +196,10 @@ Output to send to concourse to the commands:
 
  * `${SMUGGLER_OUTPUT_DIR}/versions`: For `check/in`.
    * **Optional**, only processed if no json is written in `stdout`.
+   * Smuggler will add the default key `ID`.
    * For `check`: Your command **must** write here the versions found, one line per version.
    * For `in`: If no version is written, smuggler will use the same as
      passed to the command. Only the first line will be taken into account.
-   * If each line is a valid JSON, they will be interpreted.
 
  * `${SMUGGLER_OUTPUT_DIR}/metadata`: For `in/out` *Optional.* the
    metadata for concourse as a multiline file with `key=value` pairs

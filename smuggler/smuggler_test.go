@@ -382,6 +382,17 @@ var _ = Describe("SmugglerCommand one line commands", func() {
 
 })
 
+var _ = Describe("SmugglerCommand named versions", func() {
+	JustBeforeEach(func() {
+		runCommandFromFixture(InType, "/some/path", "version_with_names", `{"foo": "foo_version", "bar": "bar_version"}`)
+	})
+
+	It("should get the versions prefixed by the key name", func() {
+		Ω(command.LastCommandOutput).Should(ContainSubstring("foo=foo_version"))
+		Ω(command.LastCommandOutput).Should(ContainSubstring("bar=bar_version"))
+	})
+})
+
 func runCommandFromFixture(requestType RequestType, dataDir string, fixtureResourceName string, version string) {
 	requestJson, err = pipeline.JsonRequest(requestType, fixtureResourceName, "a_job", version)
 	Ω(err).ShouldNot(HaveOccurred())

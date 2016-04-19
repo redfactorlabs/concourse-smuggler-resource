@@ -155,11 +155,14 @@ func prepareParams(dataDir string, outputDir string, request *ResourceRequest) (
 	params["COMMAND"] = string(request.Type)
 	params["OUTPUT_DIR"] = outputDir
 	switch request.Type {
-	case "check":
-		params["VERSION_ID"] = request.Version.ToString()
+	case "check", "in":
+		for k, v := range request.Version {
+			params[fmt.Sprintf("VERSION_%s", k)] = v
+		}
+	}
+	switch request.Type {
 	case "in":
 		params["DESTINATION_DIR"] = dataDir
-		params["VERSION_ID"] = request.Version.ToString()
 	case "out":
 		params["SOURCES_DIR"] = dataDir
 	}

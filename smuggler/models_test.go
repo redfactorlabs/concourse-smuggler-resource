@@ -14,7 +14,7 @@ var _ = Describe("ResourceRequest", func() {
 
 	It("Decoding and encoding a string with json results in the same string", func() {
 		var r *ResourceRequest
-		s := `{"source":{"commands":{"in":{"path":"env"}}},"version":{"ref":"1.2.3"},"params":{}}`
+		s := `{"source":{"commands":{"in":{"path":"env"}}},"version":{"ID":"1.2.3"},"params":{}}`
 
 		r, err := NewResourceRequest(InType, s)
 		Ω(err).ShouldNot(HaveOccurred())
@@ -31,7 +31,7 @@ var _ = Describe("ResourceRequest", func() {
 		b, err := r.ToJson()
 
 		Ω(err).ShouldNot(HaveOccurred())
-		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ref": "1.2.3"},"params":{}}`))
+		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ID": "1.2.3"},"params":{}}`))
 	})
 	It("populates the Source.ExtraParams with any additional parameter", func() {
 		json, err := pipeline.JsonRequest(InType, "mix_params", "a_job", "1.2.3")

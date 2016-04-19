@@ -150,8 +150,8 @@ resources:
         - |
           cat <<EOF
           [
-            { "ref": "3.2.1" },
-            { "ref": "3.2.2" }
+            { "ID": "3.2.1" },
+            { "ID": "3.2.2" }
           ]
           EOF
       in:
@@ -162,7 +162,7 @@ resources:
         - |
           cat <<EOF
           {
-            "version": { "ref": "3.2.1" },
+            "version": { "ID": "3.2.1" },
             "metadata": [
               { "name": "value_from_json", "value": "something" },
               { "name": "other_value_from_json", "value": "otherthing" }
@@ -181,7 +181,7 @@ resources:
         - -c
         - |
           echo "complex_param=$SMUGGLER_complex_param"
-          echo '{"ref": "someid"}' > ${SMUGGLER_OUTPUT_DIR}/versions
+          echo '{"ID": "someid"}' > ${SMUGGLER_OUTPUT_DIR}/versions
     smuggler_params:
       complex_param:
         with: "keys"
@@ -261,6 +261,14 @@ resources:
       check: "true"
       in: "true"
       out: "true"
+
+- name: version_with_names
+  type: smuggler
+  source:
+    commands:
+      in: |
+        echo foo=${SMUGGLER_VERSION_foo}
+        echo bar=${SMUGGLER_VERSION_bar}
 
 jobs:
   - name: a_job
