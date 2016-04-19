@@ -132,6 +132,8 @@ The `source` configuraton includes:
 
    These keys will override any value in `source.smuggler_params` with the same key.
 
+ * `smuggler_debug` will print debugging information to the Stderr
+
 The `get/put` task configuration includes:
 
  * `smuggler_params`: **Optional**. Similar to `source.smuggler_params`,
@@ -280,64 +282,34 @@ distribute and reuse the resource as desired.
 
 As mention, you can read the raw JSON request from concourse from `stdin`, and write
 it directly the response to `stdout`. Additionally, with `source.filter_raw_request`
-all the smuggler config will be removed from the resquest.
+all the smuggler config will be removed from the request.
 
 With these features, it is really easy to wrap any third party resource and
 change their behaviour, you only need to bundle the resource in your image
 and shell out the resource.
 
-For example, to use S3 to store generated keys with `ssh-keygen`:
+For example, use S3 resource to generate some default content if the file is
+not in the bucket, and behave as usual otherwise:
 
 ```
-- name: ssh_key_on_s3
-  type: smuggler-s3
-  source:
-    bucket: my-ssh-keys
-    versioned_file: id_rsa.tgz
-    access_key_id: ACCESS-KEY
-    secret_access_key: SECRET
+---
+filter_raw_request: true
+commands:
+  check: |
+    /opt/resource/wrapped/s3/check > response.json
+    # If it is the first run, just dispatch a - string to for 'in' to be triggered
+    jq 'if . == [] then [{ "version_id":"-"}] else . end' < response.json
 
-    commands:
-      check:
-        path: bash
-        args:
-        - -c
-        - -e
-        - |
-          if [ -z "$SMUGGLER_VERSION_ID" ] &&
-            # First time we will generate the key
-            echo "initial" > ${SMUGGLER_OUTPUT_DIR}/versions
-          else
-            /opt/resource/wrapped_resource/s3/check
-          fi
-      in:
-        path: bash
-        args:
-        - -c
-        - -e
-        - |
-          if [ "$SMUGGLER_VERSION_ID" == "initial" ] &&
-            # First time we will generate the key
-            ssh-keygen -f id_rsa -N ''
-            tar -czf ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file} id_rsa id_rsa.pub
+  in: |
+    if [ "${SMUGGLER_VERSION_version_id}" == "-" ]; then
+      # First run, simply print the default content
+      echo "${SMUGGLER_default_content}" > ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file}
+    else
+      # First run, simply print the default content
+      /opt/resource/wrapped/s3/in ${SMUGGLER_DESTINATION_DIR}
+    fi
 
-            # And the upload the key with an out command.
-            #
-            # The out command will read the "in" request from stdin and
-            # write a response to stdout both they are compatible
-            #
-            /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
-          else
-            /opt/resource/wrapped_resource/s3/in ${SMUGGLER_DESTINATION_DIR}
-          fi
-      out:
-        path: bash
-        args:
-        - -c
-        - -e
-        - |
-          /opt/resource/wrapped_resource/s3/out ${SMUGGLER_SOURCES_DIR}
-
+  out: /opt/resource/wrapped/s3/out ${SMUGGLER_SOURCES_DIR}
 ```
 
 # Examples

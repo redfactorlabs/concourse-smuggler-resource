@@ -1,0 +1,46 @@
+---
+resource_types:
+- name: s3-with-default
+  type: docker-image
+  source:
+    repository: redfactorlabs/ssh-s3-with-default
+
+resources:
+- name: my-sample-file
+  type: s3-with-default
+  source:
+    access_key_id: {{aws_access_key_id}}
+    secret_access_key: {{aws_secret_access_key}}
+    bucket: {{bucket-name}}
+    versioned_file: file.txt
+    smuggler_params:
+      default_content: |
+        Some default content in case the file is missing.
+        This will be generated in the first run.
+
+# A sample pipeline
+jobs:
+- name: test-job
+  plan:
+  - get: my-sample-file
+  - task: test-task
+    config:
+      platform: linux
+      image: docker:///alpine
+      inputs:
+      - name: my-sample-file
+      outputs:
+      - name: my-new-file
+      run:
+        path: sh
+        args:
+        - -e
+        - -c
+        - |
+          cat my-sample-file/file.txt
+          date > my-new-file/file.txt
+  - put: my-sample-file
+    params:
+      file: my-new-file/file.txt
+
+
