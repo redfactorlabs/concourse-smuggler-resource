@@ -191,8 +191,8 @@ func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRe
 		return nil, err
 	}
 
-	filterMapFromJsonStruct(request.FilteredRequest.Source, request.Source)
-	filterMapFromJsonStruct(request.FilteredRequest.Params, request.Params)
+	utils.FilterMapFromJsonStruct(request.FilteredRequest.Source, request.Source)
+	utils.FilterMapFromJsonStruct(request.FilteredRequest.Params, request.Params)
 
 	// The filtered request source is the extra params for smuggler source
 	request.Source.ExtraParams = make(map[string]interface{})
@@ -207,14 +207,6 @@ func NewResourceRequest(requestType RequestType, jsonString string) (*ResourceRe
 	}
 
 	return &request, nil
-}
-
-// Removes the keys in a map that match the json tag names (`json:"name,opts"`)
-// for the given struct value
-func filterMapFromJsonStruct(m map[string]interface{}, x interface{}) {
-	for _, t := range utils.ListJsonTagsOfStruct(x) {
-		delete(m, t)
-	}
 }
 
 func (request *ResourceRequest) ToJson() ([]byte, error) {

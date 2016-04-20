@@ -17,8 +17,6 @@ import (
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource/helpers/test"
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
-
-	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 )
 
 var pipeline_yml = Fixture("../../fixtures/pipeline.yml")
@@ -32,13 +30,15 @@ var _ = Describe("smuggler commands", func() {
 
 		commandPath        string
 		dataDir            string
-		expectedExitStatus int
 		jsonRequest        string
+		configPath         string
+		expectedExitStatus int
 	)
 
 	BeforeEach(func() {
 		expectedExitStatus = 0
 		dataDir = ""
+		configPath = ""
 	})
 
 	JustBeforeEach(func() {
@@ -57,7 +57,10 @@ var _ = Describe("smuggler commands", func() {
 		// Point log file to a temporary location
 		logFile, err = ioutil.TempFile("", "smuggler.log")
 		Ω(err).ShouldNot(HaveOccurred())
-		command.Env = append(os.Environ(), fmt.Sprintf("SMUGGLER_LOG=%s", logFile.Name()))
+		command.Env = append(os.Environ(),
+			fmt.Sprintf("SMUGGLER_LOG=%s", logFile.Name()),
+			fmt.Sprintf("SMUGGLER_CONFIG=%s", configPath),
+		)
 
 		session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Ω(err).ShouldNot(HaveOccurred())
@@ -186,8 +189,7 @@ var _ = Describe("smuggler commands", func() {
 
 	Context("when there is local config file 'smuggler.yml' that is empty", func() {
 		BeforeEach(func() {
-			err := utils.Copy("../../fixtures/empty_smuggler.yml",
-				filepath.Join(filepath.Dir(checkPath), "smuggler.yml"))
+			configPath = "../../fixtures/empty_smuggler.yml"
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 		Context("when running 'check' with a dummy definition", func() {
@@ -231,8 +233,7 @@ var _ = Describe("smuggler commands", func() {
 
 	Context("when there is local config file 'smuggler.yml' with config", func() {
 		BeforeEach(func() {
-			err := utils.Copy("../../fixtures/full_smuggler.yml",
-				filepath.Join(filepath.Dir(checkPath), "smuggler.yml"))
+			configPath = "../../fixtures/full_smuggler.yml"
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 		Context("when running 'check' with a empty command definition", func() {

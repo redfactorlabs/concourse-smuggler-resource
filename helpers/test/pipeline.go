@@ -40,6 +40,20 @@ func NewPipeline(yaml_manifest string) *Pipeline {
 	return &pipeline
 }
 
+func JsonRequestFromYaml(yaml_source string) ([]byte, error) {
+	var i interface{}
+	var b []byte
+	err := yaml.Unmarshal([]byte(yaml_source), i)
+	if err != nil {
+		return b, fmt.Errorf("Failed yaml2json %q: %+v", err, i)
+	}
+	b, err = json.Marshal(i)
+	if err != nil {
+		return b, fmt.Errorf("Failed yaml2json %q: %+v", err, i)
+	}
+	return b, nil
+}
+
 func (pipeline *Pipeline) JsonRequest(requestType RequestType, resource_name string, job_name string, version string) (string, error) {
 	var resource *Resource
 	var request RawResourceRequest

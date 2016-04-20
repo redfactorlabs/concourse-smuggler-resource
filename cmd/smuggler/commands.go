@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/imdario/mergo"
 
 	"github.com/redfactorlabs/concourse-smuggler-resource/helpers/utils"
 	"github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
@@ -92,70 +91,85 @@ func inputRequest(requestType smuggler.RequestType) *smuggler.ResourceRequest {
 		utils.Panic("reading request from stdin", err)
 	}
 
-	// If there is a config in filesystem, merge it with the request
-	smugglerConfig := readSmugglerConfig()
-	if smugglerConfig != nil {
-		// Create jsonRequest merged with the config
-		var rawRequest interface{}
-		err := json.Unmarshal(input, &rawRequest)
-		if err != nil {
-			utils.Panic("parsing request from stdin", err)
+	smugglerConfig := findAndReadSmugglerConfig()
+
+	return ParseInputAndConfig(requestType, input, smugglerConfig)
+}
+
+func ParseInputAndConfig(requestType smuggler.RequestType, input []byte, config []byte) *smuggler.ResourceRequest {
+	if len(config) > 0 {
+		var requestCatchAll struct {
+			Source  map[string]interface{} `json:"source,omitempty"`
+			Version map[string]interface{} `json:"version,omitempty"`
+			Params  map[string]interface{} `json:"params,omitempty"`
 		}
-		err = mergo.MergeWithOverwrite(smugglerConfig, rawRequest)
+		var configCatchAll map[string]interface{}
+
+		err := json.Unmarshal(input, &requestCatchAll)
 		if err != nil {
-			utils.Panic("merging config 'smuggler.yml' with request", err)
+			utils.Panic("Error parsing request: %s", err)
 		}
-		input, err = json.Marshal(smugglerConfig)
+		err = yaml.Unmarshal(config, &configCatchAll)
 		if err != nil {
-			utils.Panic("merging config 'smuggler.yml' with request (to json)", err)
+			utils.Panic("Error parsing 'smuggler.yml': %s", err)
+		}
+
+		commands, err := utils.MergeMaps(requestCatchAll.Source["commands"], configCatchAll["commands"])
+		if err != nil {
+			utils.Panic("Format error in 'commands', is not a map: %s", err)
+		}
+		smuggler_params, err := utils.MergeMaps(requestCatchAll.Source["smuggler_params"], configCatchAll["smuggler_params"])
+		if err != nil {
+			utils.Panic("Format error in 'smuggler_params', is not a map: %s", err)
+		}
+
+		if requestCatchAll.Source == nil {
+			requestCatchAll.Source = make(map[string]interface{})
+		}
+		for k, v := range configCatchAll {
+			requestCatchAll.Source[k] = v
+		}
+		requestCatchAll.Source["commands"] = commands
+		requestCatchAll.Source["smuggler_params"] = smuggler_params
+
+		input, err = json.Marshal(&requestCatchAll)
+		if err != nil {
+			utils.Panic("Error merging 'smuggler.yml': %s", err)
 		}
 	}
-
 	request, err := smuggler.NewResourceRequest(requestType, string(input))
 	if err != nil {
-		utils.Panic("parsing request from stdin", err)
+		utils.Panic("Error parsing request from stdin: %s", err)
 	}
-
 	return request
 }
 
-// Load the local config file
-func readSmugglerConfig() interface{} {
-	var source smuggler.SmugglerSource
-	var config interface{}
-
+func findAndReadSmugglerConfig() []byte {
 	smugglerYmlPaths := []string{
 		filepath.Join(filepath.Dir(os.Args[0]), "smuggler.yml"),
-		"/opt/resource/smuggler.yml",
+		utils.GetEnvOrDefault("SMUGGLER_CONFIG", "/opt/resource/smuggler.yml"),
 	}
 
 	smugglerConfigFile := ""
 OuterLoop:
 	for _, f := range smugglerYmlPaths {
-		logger.Printf("[INFO] Searching for config file %s", f)
 		if _, err := os.Stat(f); !os.IsNotExist(err) {
 			smugglerConfigFile = f
 			break OuterLoop
 		}
 	}
 	if smugglerConfigFile == "" {
-		return nil
+		logger.Printf("[INFO] No config file in any of: %s", strings.Join(smugglerYmlPaths, ", "))
+		return []byte{}
 	}
 	logger.Printf("[INFO] Found config file %s", smugglerConfigFile)
+
 	content, err := ioutil.ReadFile(smugglerConfigFile)
 	if err != nil {
 		utils.Panic("Error reading '%s': %s", smugglerConfigFile, err)
 	}
 
-	// Check the syntax of the config
-	yaml.Unmarshal(content, &source)
-	if err != nil {
-		utils.Panic("Error parsing '%s': %s", smugglerConfigFile, err)
-	}
-	// But unmarshall in raw
-	yaml.Unmarshal(content, &config)
-
-	return &map[string]interface{}{"source": config}
+	return content
 }
 
 // Send back response

@@ -95,3 +95,49 @@ func ListJsonTagsOfStruct(x interface{}) []string {
 	}
 	return tags
 }
+
+// Removes the keys in a map that match the json tag names (`json:"name,opts"`)
+// for the given struct value
+func FilterMapFromJsonStruct(m map[string]interface{}, x interface{}) {
+	for _, t := range ListJsonTagsOfStruct(x) {
+		delete(m, t)
+	}
+}
+
+func InterfaceToMap(v interface{}) (map[string]interface{}, error) {
+	switch v.(type) {
+	case map[string]interface{}:
+		return v.(map[string]interface{}), nil
+	default:
+		return nil, fmt.Errorf("The value %+v is not a map", v)
+	}
+}
+
+// If a and b are a maps, merge a into b, not overriding
+func MergeMaps(a, b interface{}) (interface{}, error) {
+	if a == nil {
+		return b, nil
+	}
+	if b == nil {
+		return a, nil
+	}
+	ma, err := InterfaceToMap(a)
+	if err != nil {
+		return nil, err
+	}
+	mb, err := InterfaceToMap(b)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]interface{})
+	for k, v := range ma {
+		m[k] = v
+	}
+	for k, v := range mb {
+		if m[k] == nil {
+			m[k] = v
+		}
+	}
+	return m, nil
+}
