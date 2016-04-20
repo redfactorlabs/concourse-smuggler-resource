@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,11 +22,17 @@ func main() {
 
 	dataDir, requestType := processArguments()
 
+	// Open Logger
 	tempFileLogger := openSmugglerLog()
 	logger = tempFileLogger.Logger
 
 	// Read request
 	request := inputRequest(requestType)
+
+	// Dump logs to stderr if required
+	if request.Source.SmugglerDebug {
+		tempFileLogger.DupToStderr()
+	}
 
 	// Execute command
 	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
@@ -33,8 +40,14 @@ func main() {
 	response, err := command.RunAction(dataDir, request)
 
 	// Print output to stderr
-	os.Stderr.Write(command.LastCommandOutput)
-	os.Stderr.Write(command.LastCommandErr)
+	if len(command.LastCommandErr) > 0 {
+		fmt.Fprintf(os.Stderr, "Stderr:")
+		os.Stderr.Write(command.LastCommandErr)
+	}
+	if len(command.LastCommandOutput) > 0 {
+		fmt.Fprintf(os.Stderr, "Stdout:")
+		os.Stderr.Write(command.LastCommandOutput)
+	}
 
 	if err != nil {
 		utils.Fatal("running command", err, command.LastCommandExitStatus())

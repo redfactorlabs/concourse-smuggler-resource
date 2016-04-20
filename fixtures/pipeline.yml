@@ -276,6 +276,15 @@ resources:
       in: "true"
       out: "true"
 
+- name: a_quiet_command_debug_enabled
+  type: smuggler
+  source:
+    smuggler_debug: true
+    commands:
+      check: "true"
+      in: "true"
+      out: "true"
+
 - name: version_with_names
   type: smuggler
   source:

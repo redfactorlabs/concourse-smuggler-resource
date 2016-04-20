@@ -330,6 +330,16 @@ var _ = Describe("smuggler commands", func() {
 			})
 		})
 	})
+	Context("when running a quiet command in debug", func() {
+		Context("when running 'check'", func() {
+			BeforeEach(func() {
+				commandPath, jsonRequest = prepareCommandCheck("a_quiet_command_debug_enabled")
+			})
+			It("It prints the log messages to stderr", func() {
+				Ω(session.Err.Contents()).To(ContainSubstring("Running check action"))
+			})
+		})
+	})
 
 })
 

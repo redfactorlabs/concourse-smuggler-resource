@@ -194,7 +194,8 @@ Output to send to concourse to the commands:
     request [as described in the implementing concourse resources documentation.]
     (https://concourse.ci/implementing-resources.html)
 
-> **Note** if you print to stdout and it is not JSON, the output will be discarded.
+> **Note** if you print to stdout and it is not JSON, the output will be not
+> be used to generate the version, but instead printed to stderr.
 
  * `${SMUGGLER_OUTPUT_DIR}/versions`: For `check/in`.
    * **Optional**, only processed if no json is written in `stdout`.

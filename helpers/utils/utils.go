@@ -17,16 +17,25 @@ type TempFileLogger struct {
 }
 
 func NewTempFileLogger(path string) (*TempFileLogger, error) {
+	var l *log.Logger
 	f, err := os.Create(path)
 	if err != nil {
 		return nil, err
 	}
-	l := log.New(f, "", log.Ldate|log.Ltime)
+	l = log.New(f, "", log.Ldate|log.Ltime)
 	t := &TempFileLogger{
 		logFile: f,
 		Logger:  l,
 	}
 	return t, nil
+}
+
+func (t *TempFileLogger) DupToStderr() {
+	t.Logger = log.New(io.MultiWriter(os.Stderr, t.logFile), "", log.Ldate|log.Ltime)
+}
+
+func (t *TempFileLogger) SendToStderr() {
+	t.logFile.Close()
 }
 
 func (t *TempFileLogger) Close() {

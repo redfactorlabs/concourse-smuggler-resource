@@ -11,6 +11,7 @@ import (
 type SmugglerSource struct {
 	Commands         map[string]interface{} `json:"commands,omitempty"`
 	FilterRawRequest bool                   `json:"filter_raw_request,omitempty"`
+	SmugglerDebug    bool                   `json:"smuggler_debug,omitempty"`
 	SmugglerParams   map[string]interface{} `json:"smuggler_params,omitempty"`
 	ExtraParams      map[string]interface{} `json:"-"`
 }

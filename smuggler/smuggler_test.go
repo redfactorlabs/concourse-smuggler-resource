@@ -174,6 +174,9 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(response.Versions).Should(Equal(vs))
 			})
+			It("The stdout buffer is cleared", func() {
+				Ω(command.LastCommandOutput).Should(BeEmpty())
+			})
 		})
 	})
 

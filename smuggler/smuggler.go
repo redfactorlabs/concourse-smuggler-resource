@@ -121,6 +121,9 @@ func (command *SmugglerCommand) RunAction(dataDir string, request *ResourceReque
 		if err != nil {
 			return &response, err
 		}
+	} else {
+		// Empty the output buffer
+		command.LastCommandOutput = []byte{}
 	}
 
 	command.logger.Printf("[INFO] command reports versions '%q'", response.Versions)
