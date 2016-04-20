@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,12 +15,15 @@ import (
 	"github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
+var logger = log.New(os.Stderr, "", log.Ldate|log.Ltime)
+
 func main() {
 	defer utils.PrintRecover()
 
 	dataDir, requestType := processArguments()
 
 	tempFileLogger := openSmugglerLog()
+	logger = tempFileLogger.Logger
 
 	// Read request
 	request := inputRequest(requestType)
@@ -120,10 +124,24 @@ func readSmugglerConfig() interface{} {
 	var source smuggler.SmugglerSource
 	var config interface{}
 
-	smugglerConfigFile := filepath.Join(filepath.Dir(os.Args[0]), "smuggler.yml")
-	if _, err := os.Stat(smugglerConfigFile); os.IsNotExist(err) {
+	smugglerYmlPaths := []string{
+		filepath.Join(filepath.Dir(os.Args[0]), "smuggler.yml"),
+		"/opt/resource/smuggler.yml",
+	}
+
+	smugglerConfigFile := ""
+OuterLoop:
+	for _, f := range smugglerYmlPaths {
+		logger.Printf("[INFO] Searching for config file %s", f)
+		if _, err := os.Stat(f); !os.IsNotExist(err) {
+			smugglerConfigFile = f
+			break OuterLoop
+		}
+	}
+	if smugglerConfigFile == "" {
 		return nil
 	}
+	logger.Printf("[INFO] Found config file %s", smugglerConfigFile)
 	content, err := ioutil.ReadFile(smugglerConfigFile)
 	if err != nil {
 		utils.Panic("Error reading '%s': %s", smugglerConfigFile, err)
