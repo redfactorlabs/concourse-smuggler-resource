@@ -227,7 +227,6 @@ var _ = Describe("smuggler commands", func() {
 				Ω(stderr).Should(ContainSubstring("param3=123"))
 			})
 		})
-
 	})
 
 	Context("when there is local config file 'smuggler.yml' with config", func() {
@@ -285,6 +284,39 @@ var _ = Describe("smuggler commands", func() {
 				Ω(stderr).ShouldNot(ContainSubstring("from config file"))
 			})
 		})
+
+		Context("when running 'check' with a definition with only 'in' command defined", func() {
+			BeforeEach(func() {
+				commandPath, jsonRequest = prepareCommandCheck("test_merge_with_smuggler_yml")
+			})
+			It("returns versions of the config file", func() {
+				var response []Version
+				err := json.Unmarshal(session.Out.Contents(), &response)
+				Ω(err).ShouldNot(HaveOccurred())
+				vs, err := NewVersions([]string{"4.5.6", "4.5.7"})
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(response).Should(BeEquivalentTo(vs))
+			})
+
+			It("outputs the commands output from the config file definition", func() {
+				stderr := session.Err.Contents()
+
+				Ω(stderr).Should(ContainSubstring("config_param1=param_in_config"))
+				Ω(stderr).Should(ContainSubstring("param1=param1"))
+				Ω(stderr).Should(ContainSubstring("from config file"))
+				Ω(stderr).ShouldNot(ContainSubstring("Command Start"))
+			})
+		})
+		Context("when running 'in' with a definition with only 'in' command defined", func() {
+			BeforeEach(func() {
+				commandPath, dataDir, jsonRequest = prepareCommandIn("test_merge_with_smuggler_yml")
+			})
+			It("outputs the commands output from the pipeline definition", func() {
+				stderr := session.Err.Contents()
+				Ω(stderr).Should(ContainSubstring("from pipeline"))
+			})
+		})
+
 	})
 
 	Context("when running a quiet command", func() {

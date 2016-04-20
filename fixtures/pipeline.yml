@@ -100,6 +100,20 @@ resources:
 - name: dummy_command
   type: smuggler
 
+- name: test_merge_with_smuggler_yml
+  type: smuggler
+  source:
+    smuggler_params:
+      param1: param1
+    commands:
+      in:
+        path: sh
+        args:
+        - -c
+        - |
+          echo "command in from pipeline"
+
+
 - name: empty_command_with_params
   type: smuggler
   source:
