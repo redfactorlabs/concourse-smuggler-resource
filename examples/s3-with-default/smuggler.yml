@@ -1,0 +1,19 @@
+---
+#filter_raw_request: true
+commands:
+  check: |
+    /opt/resource/wrapped/s3/check > response.json
+    # If it is the first run, just dispatch a - string to for 'in' to be triggered
+    jq 'if . == [] then [{ "version_id":"-"}] else . end' < response.json
+
+  in: |
+    if [ "${SMUGGLER_VERSION_version_id}" == "-" ]; then
+      # First run, simply print the default content
+      echo "${SMUGGLER_default_content}" > ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file}
+    else
+      # First run, simply print the default content
+      /opt/resource/wrapped/s3/in ${SMUGGLER_DESTINATION_DIR}
+    fi
+
+  out: /opt/resource/wrapped/s3/out ${SMUGGLER_SOURCES_DIR}
+

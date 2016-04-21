@@ -1,0 +1,69 @@
+---
+resource_types:
+- name: smuggler-ssh-keygen-s3
+  type: docker-image
+  source:
+    repository: redfactorlabs/ssh-keygen-s3-resource
+
+# Define the ssh-keygen resource
+resources:
+- name: ssh-keygen-s3
+  type: smuggler-ssh-keygen-s3
+  source:
+    access_key_id: {{aws_access_key_id}}
+    secret_access_key: {{aws_secret_access_key}}
+    bucket: {{bucket-name}}
+    filter_raw_request: true
+    smuggler_params:
+      key_name: my_key
+    commands:
+      check: |
+        # Inject the "versioned_file" with the name of key_name
+        jq ".source |= .+ {\"versioned_file\": \"${SMUGGLER_key_name}.tgz\"} | ." > request.json
+        # Run our check and capture the output
+        /opt/resource/wrapped/s3/check < request.json > response.json
+        # If it is the first run, just dispatch a - string to for 'in' to be triggered
+        jq 'if . == [] then [{ "version_id":"-"}] else . end' < response.json
+
+      in: |
+        # Inject the "versioned_file" with the name of key_name
+        jq ".source |= .+ {\"versioned_file\": \"${SMUGGLER_key_name}.tgz\"} | ." > request.json
+
+        # First run, generate the key
+        if [ "${SMUGGLER_VERSION_version_id}" == "-" ]; then
+          # Generate the key
+          ssh-keygen -f id_rsa -N '' 1>&2
+          tar -czf ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_key_name}.tgz id_rsa id_rsa.pub
+
+          # Execute out to upload the data.
+          # First inject the "file" param to tell out which file upload
+          jq ".params |= .+ {\"file\": \"${SMUGGLER_key_name}.tgz\"} | ." < request.json > request_out.json
+
+          #  The 'out' output should be compatible with 'in'
+          /opt/resource/wrapped/s3/out ${SMUGGLER_DESTINATION_DIR} < request_out.json
+        else
+          /opt/resource/wrapped/s3/in ${SMUGGLER_DESTINATION_DIR} < request.json
+        fi
+
+
+# A sample pipeline
+jobs:
+- name: do_something_with_ssh
+  serial: true
+  plan:
+  - get: ssh-keygen-s3
+  - task: print-ssh-key-s3
+    config:
+        platform: linux
+        image: docker:///ubuntu
+        inputs:
+        - name: ssh-keygen-s3
+        run:
+          path: sh
+          args:
+          - -e
+          - -c
+          - |
+            tar -xvzf ssh-keygen-s3/my_key.tgz
+            cat id_rsa id_rsa.pub
+
