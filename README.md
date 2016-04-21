@@ -322,6 +322,8 @@ for examples of hacks and resources.
 
 Smuggling is fun! Share it! Send over or comment us your hacks and implementations.
 
+See the [AUTHORS](AUTHORS.md) file for contributions.
+
 # Credits
 
 I stoled a lot of code around in github, specially from other resources
