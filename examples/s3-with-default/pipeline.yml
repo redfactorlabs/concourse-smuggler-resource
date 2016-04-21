@@ -6,7 +6,7 @@ resource_types:
     repository: redfactorlabs/ssh-s3-with-default
 
 resources:
-- name: my-sample-file
+- name: sample-txt-file
   type: s3-with-default
   source:
     access_key_id: {{aws_access_key_id}}
@@ -18,11 +18,22 @@ resources:
         Some default content in case the file is missing.
         This will be generated in the first run.
 
+- name: sample-archive-file
+  type: s3-with-default
+  source:
+    access_key_id: {{aws_access_key_id}}
+    secret_access_key: {{aws_secret_access_key}}
+    bucket: {{bucket-name}}
+    versioned_file: data.tgz
+    smuggler_params:
+      default_command: "touch empty && tar -czf ${versioned_file} empty"
+
+
 # A sample pipeline
 jobs:
-- name: test-job
+- name: default_text_job
   plan:
-  - get: my-sample-file
+  - get: sample-txt-file
   - task: test-task
     config:
       platform: linux
@@ -39,8 +50,31 @@ jobs:
         - |
           cat my-sample-file/file.txt
           date > my-new-file/file.txt
-  - put: my-sample-file
+  - put: sample-txt-file
     params:
       file: my-new-file/file.txt
 
+- name: default_tgz_job
+  plan:
+  - get: sample-archive-file
+  - task: test-task
+    config:
+      platform: linux
+      image: docker:///alpine
+      inputs:
+      - name: sample-archive-file
+      outputs:
+      - name: new-archive-file
+      run:
+        path: sh
+        args:
+        - -e
+        - -c
+        - |
+          tar -xvzf sample-archive-file/data.tgz
+          touch $(date +%Y%m%d-%H%M%S).txt
+          tar -cvzf new-archive-file/data.tgz *.txt
+  - put: sample-archive-file
+    params:
+      file: new-archive-file/data.tgz
 

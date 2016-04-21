@@ -8,8 +8,13 @@ commands:
 
   in: |
     if [ "${SMUGGLER_VERSION_version_id}" == "-" ]; then
-      # First run, simply print the default content
-      echo "${SMUGGLER_default_content}" > ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file}
+      # First run, generate the default content in configured
+      if [ -n "${SMUGGLER_default_content:-}" ]; then
+        echo "${SMUGGLER_default_content}" > ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file}
+      elif [ -n "${SMUGGLER_default_command:-}" ]; then
+        versioned_file=${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_versioned_file}
+        eval "${SMUGGLER_default_command}"
+      fi
     else
       # First run, simply print the default content
       /opt/resource/wrapped/s3/in ${SMUGGLER_DESTINATION_DIR}
