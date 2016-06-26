@@ -19,8 +19,10 @@ You can easily register smuggler as a service by using
 First build the container:
 
 ```
-# A repository in dockerhub or other docker repository
-export SMUGGLER_DOCKER_TAG=<...your_docker_repository...>
+# You want to replece it with your own Docker repository. 
+export SMUGGLER_DOCKER_REPOSITORY=redfactorlabs/concourse-smuggler-resource
+# A Docker tag for that container
+export SMUGGLER_DOCKER_TAG=ubuntu-14.04
 ./scripts/build-docker
 ```
 
@@ -33,7 +35,7 @@ resource_types:
   type: docker-image
   source:
     # Replace the url
-    repository: <...your_docker_repository...>
+    repository: redfactorlabs/concourse-smuggler-resource:ubuntu-14.04
 ```
 
 Modify `Dockerfile` to build your own container image bundled with smuggler.
@@ -45,7 +47,7 @@ See below for more details.
 
 ## Source configuration and tasks
 
-Once you `smuggler` is defined as a resource type, you only need to define
+Once your `smuggler` is defined as a resource type, you only need to define
 your resource using this structure:
 
 ```
