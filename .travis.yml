@@ -1,13 +1,23 @@
-sudo: false # Enables container based builds
-
+sudo: false
 language: go
+
 go:
 - 1.8
 
 install:
-  - export PATH=$PATH:$HOME/gopath/bin
-  - go get github.com/tools/godep
-  - godep restore
+- export PATH=$PATH:$HOME/gopath/bin
+- go get github.com/tools/godep
+- godep restore
 
 script:
- - ./scripts/test
+- "./scripts/test"
+- "./scripts/build"
+
+deploy:
+  provider: releases
+  file_glob: true
+  file: "assets/smuggler-*-*"
+  api_key:
+    secure: yjY98eo4+2tyGnGblZDyY6lBqXOkPhFXAB00LcIuymTu+4/ApwiqvvBNvbU4qcqTrl/ap+L9AN2oHj2ThUb059639tO7gBeENt1kQZSEeB9qKrWpI9VE8gwL6wvwbwWct0QouYa/2vjSiTVIQuw9h1hQz7L41FqVmgx7eZi0/9WxORu7lOwy616zUgvZvIVLo00ydK6NggIs+4xYlvDV4DiFTwSb9iG9DKt+/5gRKIBDHrFcTfWTq0dLbDI5JVH8TNzft519qqQ/lwGm1CFvwq1zXdyfDhWA3vLpJmMqQfSYgxZGoDul/HFppW02W/Tjb/bVSAalrD+rx4OsFDqUDZ6nHDrfb43fJOv+69ZPrTFpgx6lNNuO+dGRnYpg4aCw8EtmW05Smm/9iP0W0qX+MbGOC9yVH4ps+Iia+gnJqrdw0wXzdGKlauIV5MadZ9S0DNdOio95TwNerAYesMHMz2BluJQpsvnRdvwI49V1vo9SEVIhyt9oKr3ZiTuXhUNISvEdlJMp5UQWk/MpimHcD8Fmo49aQOQwdtkSgM6wBqooMwK98MibMkWHaMJmelUoY0nv/JHzux2aTL1rG4ldSLT567woTVRg4JW2UCIyXA7TFfNlo9BVoCfReL2VSbVSCYiH02SkvQdt36YHCDpqKKKbymZY2RjXYs9J3qgv3cU=
+  on:
+    tags: true
