@@ -7,5 +7,6 @@ go install github.com/tools/godep
 godep restore
 ./scripts/test
 ./scripts/build
+
 docker build -t ${SMUGGLER_DOCKER_TAG} .
 docker push ${SMUGGLER_DOCKER_TAG}
