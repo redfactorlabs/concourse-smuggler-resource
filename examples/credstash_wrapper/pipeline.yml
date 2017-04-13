@@ -1,0 +1,99 @@
+#
+# fly -t demo set-pipeline \
+#   -p smuggler-credstash-wrapper \
+#   -c pipeline.yml \
+#   --var "credstash_aws_access_key_id=${AWS_ACCESS_KEY_ID}" \
+#   --var "credstash_aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" \
+#   --var "credstash_aws_session_token=${AWS_SESSION_TOKEN}" \
+#   --var bucket-name=smuggler-test-bucket
+#
+---
+resource_types:
+- name: smuggler-credstash-git
+  type: docker-image
+  source:
+    repository: redfactorlabs/smuggler-credstash-git-resource
+
+- name: smuggler-credstash-s3
+  type: docker-image
+  source:
+    repository: redfactorlabs/smuggler-credstash-s3-resource
+
+resources:
+
+- name: project-git-creds
+  type: smuggler-credstash-git
+  source:
+    credstash_table: credstash-concourse-demo
+    credstash_aws_access_key_id: {{credstash_aws_access_key_id}}
+    credstash_aws_secret_access_key: {{credstash_aws_secret_access_key}}
+    credstash_aws_session_token: {{credstash_aws_session_token}}
+    uri: git@github.com:redfactorlabs/concourse-smuggler-resource
+    private_key: "(( grab $github.id_rsa ))"
+
+- name: project-git-iam-profile
+  type: smuggler-credstash-git
+  source:
+    credstash_table: credstash-concourse-demo
+    aws_iam_profile: true
+    uri: git@github.com:redfactorlabs/concourse-smuggler-resource
+    private_key: "(( grab $github.id_rsa ))"
+
+- name: project-s3-iam-profile
+  type: smuggler-credstash-git
+  source:
+    credstash_table: credstash-concourse-demo
+    credstash_aws_access_key_id: {{credstash_aws_access_key_id}}
+    credstash_aws_secret_access_key: {{credstash_aws_secret_access_key}}
+    credstash_aws_session_token: {{credstash_aws_session_token}}
+    access_key_id: "(( grab $aws.s3.access_key_id ))"
+    secret_access_key: "(( grab $aws.s3.secret_access_key ))"
+    bucket: {{bucket-name}}
+    versioned_file: data.tgz
+
+jobs:
+- name: test_job_git
+  serial: true
+  plan:
+  - get: project-git-creds
+  - get: project-git-iam-profile
+  - task: what_is_in_there
+    config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: alpine
+        inputs:
+        - name: project-git-creds
+        - name: project-git-iam-profile
+        run:
+          path: sh
+          args:
+          - -e
+          - -c
+          - |
+            find .
+
+- name: test_job_s3
+  serial: true
+  plan:
+  - get: project-s3-iam-profile
+  - task: what_is_in_there
+    config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: alpine
+        inputs:
+        - name: project-s3-iam-profile
+        run:
+          path: sh
+          args:
+          - -e
+          - -c
+          - |
+            find .
+
+
