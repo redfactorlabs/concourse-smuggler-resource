@@ -1,0 +1,103 @@
+# credstash -r eu-west-1 -t credstash-concourse-demo put -k alias/credstash-concourse-demo deploy.test-server.TOKEN "$(uuidgen)"
+# credstash -r eu-west-1 -t credstash-concourse-demo put -k alias/credstash-concourse-demo example.key.date "$(date)"
+# credstash -r eu-west-1 -t credstash-concourse-demo put-file -k alias/credstash-concourse-demo github.id_rsa ~/.ssh/concourse-demo
+#
+# fly -t demo set-pipeline \
+#   -p smuggler-credstash \
+#   -c pipeline.yml \
+#   --var "credstash_aws_access_key_id=${AWS_ACCESS_KEY_ID}" \
+#   --var "credstash_aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" \
+#   --var "credstash_aws_session_token=${AWS_SESSION_TOKEN}" \
+#
+---
+resource_types:
+- name: smuggler-credstash
+  type: docker-image
+  source:
+    repository: redfactorlabs/smuggler-credstash-resource
+
+resources:
+
+- name: credstash-aws-creds
+  type: smuggler-credstash
+  source:
+    credstash_table: credstash-concourse-demo
+    credstash_key: alias/credstash-concourse-demo
+    credstash_aws_access_key_id: {{credstash_aws_access_key_id}}
+    credstash_aws_secret_access_key: {{credstash_aws_secret_access_key}}
+    credstash_aws_session_token: {{credstash_aws_session_token}}
+
+- name: credstash-iam-profile
+  type: smuggler-credstash
+  source:
+    credstash_table: credstash-concourse-demo
+    credstash_key: alias/credstash-concourse-demo
+    credstash_aws_iam_profile: true
+
+jobs:
+- name: credstash-aws-creds
+  serial: true
+  plan:
+  - get: credstash-aws-creds
+    params:
+      secrets:
+      - example.key.date
+      - deploy.test-server.TOKEN
+      - github.id_rsa
+
+- name: credstash-iam-profile
+  serial: true
+  plan:
+  - get: credstash-iam-profile
+    params:
+      secrets:
+      - example.key.date
+      - deploy.test-server.TOKEN
+      - github.id_rsa
+  - task: display_secrets
+    config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: alpine
+        inputs:
+        - name: credstash-iam-profile
+        outputs:
+        - name: new_secrets
+        run:
+          path: sh
+          args:
+          - -e
+          - -c
+          - |
+            # Files
+            find .
+            for f in credstash-*/*; do
+              echo "Printing $f"
+              echo "-------- 8< -------- 8< -------- 8< -------- 8< --------"
+              cat $f
+              echo "-------- 8< -------- 8< -------- 8< -------- 8< --------"
+              echo
+            done
+
+            # Trying the shell helper
+            eval $(credstash-iam-profile/credstash.sh)
+            echo "\$example_key_date='$example_key_date'"
+            echo "\$github_id_rsa='$github_id_rsa'"
+            echo "\$deploy_test_server_TOKEN='$deploy_test_server_TOKEN'"
+
+            # Trying the shell helper for terraform
+            eval $(credstash-iam-profile/credstash-terraform.sh)
+            env | grep TF_VAR
+
+            # Adding a new secret
+            mkdir -p new_secrets
+            date > new_secrets/example.key.date
+  - put: credstash-iam-profile
+    params:
+      secrets_dir: new_secrets
+
+
+
+
