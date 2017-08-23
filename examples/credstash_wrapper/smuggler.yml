@@ -1,0 +1,4 @@
+commands:
+  check: /opt/resource/bin/wrapper.sh
+  in: /opt/resource/bin/wrapper.sh ${SMUGGLER_DESTINATION_DIR}
+  out: /opt/resource/bin/wrapper.sh ${SMUGGLER_SOURCES_DIR}

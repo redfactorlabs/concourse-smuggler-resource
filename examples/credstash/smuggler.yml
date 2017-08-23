@@ -1,0 +1,57 @@
+commands:
+  check: |
+    if [ "${SMUGGLER_credstash_aws_iam_profile:-}" != "true" ]; then
+      export AWS_ACCESS_KEY_ID="${SMUGGLER_credstash_aws_access_key_id}"
+      export AWS_SECRET_ACCESS_KEY="${SMUGGLER_credstash_aws_secret_access_key}"
+      export AWS_SESSION_TOKEN="${SMUGGLER_credstash_aws_session_token:-}"
+    fi
+    credstash \
+      -r ${SMUGGLER_credstash_region:-eu-west-1} \
+      ${SMUGGLER_credstash_table:+-t ${SMUGGLER_credstash_table}} \
+      list | sha1sum | cut -f 1 -d " " > ${SMUGGLER_OUTPUT_DIR}/versions
+
+  in: |
+    if [ "${SMUGGLER_credstash_aws_iam_profile:-}" != "true" ]; then
+      export AWS_ACCESS_KEY_ID="${SMUGGLER_credstash_aws_access_key_id}"
+      export AWS_SECRET_ACCESS_KEY="${SMUGGLER_credstash_aws_secret_access_key}"
+      export AWS_SESSION_TOKEN="${SMUGGLER_credstash_aws_session_token:-}"
+    fi
+
+    # Create the sh helpers
+    cat <<"EOF" > "${SMUGGLER_DESTINATION_DIR}/credstash.sh"
+    #/bin/sh
+    SCRIPT_PATH="$(dirname $0)"
+    EOF
+    chmod +x "${SMUGGLER_DESTINATION_DIR}/credstash.sh"
+    cp "${SMUGGLER_DESTINATION_DIR}/credstash.sh" "${SMUGGLER_DESTINATION_DIR}/credstash-terraform.sh"
+
+    for secret in $(echo "${SMUGGLER_secrets}" | jq -r '.[]' ); do
+      echo "INFO: Reading following secret: ${secret}"
+      mkdir -p "$(dirname "${SMUGGLER_DESTINATION_DIR}/${secret}")"
+      credstash \
+        -r ${SMUGGLER_credstash_region:-eu-west-1} \
+        ${SMUGGLER_credstash_table:+-t ${SMUGGLER_credstash_table}} \
+        get ${secret} > "${SMUGGLER_DESTINATION_DIR}/${secret}"
+      echo "echo export $(echo ${secret} | tr '.-' '__')=\"\\\$(cat \$SCRIPT_PATH/${secret})\"" >> "${SMUGGLER_DESTINATION_DIR}/credstash.sh"
+      echo "echo export $(echo TF_VAR_${secret} | tr '.-' '__')=\"\\\$(cat \$SCRIPT_PATH/${secret})\"" >> "${SMUGGLER_DESTINATION_DIR}/credstash-terraform.sh"
+    done
+  out: |
+    if [ "${SMUGGLER_credstash_aws_iam_profile:-}" != "true" ]; then
+      export AWS_ACCESS_KEY_ID="${SMUGGLER_credstash_aws_access_key_id}"
+      export AWS_SECRET_ACCESS_KEY="${SMUGGLER_credstash_aws_secret_access_key}"
+      export AWS_SESSION_TOKEN="${SMUGGLER_credstash_aws_session_token:-}"
+    fi
+
+    dir="$(echo "${SMUGGLER_SOURCES_DIR}/${SMUGGLER_secrets_dir}" | sed 's|//*|/|g;s|/$||')"
+    for secret_file in "${dir}"/*; do
+      secret="${secret_file##${dir}/}"
+      echo "INFO: Setting following secret: ${secret}"
+      credstash \
+        -r ${SMUGGLER_credstash_region:-eu-west-1} \
+        ${SMUGGLER_credstash_table:+-t ${SMUGGLER_credstash_table}} \
+        put \
+        ${SMUGGLER_credstash_key:+-k ${SMUGGLER_credstash_key}} \
+        -a \
+        "${secret}" "$(cat ${secret_file})"
+    done
+
