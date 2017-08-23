@@ -1,0 +1,14 @@
+FROM concourse/docker-image-resource
+
+RUN mv /opt/resource/check /opt/resource/check.wrapped \
+    && mv /opt/resource/in /opt/resource/in.wrapped \
+    && mv /opt/resource/out /opt/resource/out.wrapped
+
+RUN mkdir -p /opt/resource/bin
+ADD ./assets/smuggler /opt/resource/bin/
+
+RUN ln /opt/resource/bin/smuggler /opt/resource/check && \
+    ln /opt/resource/bin/smuggler /opt/resource/in && \
+    ln /opt/resource/bin/smuggler /opt/resource/out
+
+ADD ./smuggler-docker-patch.yml /opt/resource/smuggler.yml
