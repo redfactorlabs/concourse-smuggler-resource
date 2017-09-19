@@ -19,7 +19,7 @@ import (
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
 )
 
-var pipeline_yml = Fixture("../../fixtures/pipeline.yml")
+var pipeline_yml = Fixture("./fixtures/pipeline.yml")
 var pipeline = NewPipeline(pipeline_yml)
 var err error
 
@@ -189,7 +189,7 @@ var _ = Describe("smuggler commands", func() {
 
 	Context("when there is local config file 'smuggler.yml' that is empty", func() {
 		BeforeEach(func() {
-			configPath = "../../fixtures/empty_smuggler.yml"
+			configPath = "./fixtures/empty_smuggler.yml"
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 		Context("when running 'check' with a dummy definition", func() {
@@ -233,7 +233,7 @@ var _ = Describe("smuggler commands", func() {
 
 	Context("when there is local config file 'smuggler.yml' with config", func() {
 		BeforeEach(func() {
-			configPath = "../../fixtures/full_smuggler.yml"
+			configPath = "./fixtures/full_smuggler.yml"
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 		Context("when running 'check' with a empty command definition", func() {
