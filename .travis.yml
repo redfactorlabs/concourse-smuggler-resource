@@ -6,8 +6,6 @@ go:
 
 install:
 - export PATH=$PATH:$HOME/gopath/bin
-- go get github.com/tools/godep
-- godep restore
 
 script:
 - "make install-deps build"
