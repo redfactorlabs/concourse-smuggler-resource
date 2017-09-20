@@ -10,8 +10,7 @@ install:
 - godep restore
 
 script:
-- "./scripts/test"
-- "./scripts/build"
+- "make install-deps build"
 
 deploy:
   provider: releases
