@@ -397,8 +397,8 @@ func InOutCommonSmugglerTests(session **gexec.Session) func() {
 			err := json.Unmarshal((*session).Out.Contents(), &response)
 			Ω(err).ShouldNot(HaveOccurred())
 			expectedMetadata := []MetadataPair{
-				MetadataPair{Name: "value1", Value: "something quite long"},
-				MetadataPair{Name: "value_2", Value: "2"},
+				{Name: "value1", Value: "something quite long"},
+				{Name: "value_2", Value: "2"},
 			}
 			Ω(response.Metadata).Should(Equal(expectedMetadata))
 		})

@@ -268,8 +268,8 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 			})
 			It("it returns metadata as list of strings", func() {
 				vs := []MetadataPair{
-					MetadataPair{Name: "value_from_json", Value: "something"},
-					MetadataPair{Name: "other_value_from_json", Value: "otherthing"},
+					{Name: "value_from_json", Value: "something"},
+					{Name: "other_value_from_json", Value: "otherthing"},
 				}
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
@@ -477,8 +477,8 @@ func InOutCommonSmugglerTests() func() {
 			})
 			It("it returns metadata as list of strings", func() {
 				vs := []MetadataPair{
-					MetadataPair{Name: "value1", Value: "something quite long"},
-					MetadataPair{Name: "value_2", Value: "2"},
+					{Name: "value1", Value: "something quite long"},
+					{Name: "value_2", Value: "2"},
 				}
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
