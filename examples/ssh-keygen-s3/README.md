@@ -18,8 +18,7 @@ You need to create a docker hub image repository and run:
 ```
 # Your container repository in docker-hub
 export CONTAINER_TAG=<your image>
-
-./build.sh
+docker build . -t $CONTAINER_TAG
 ```
 
 ## Configure pipeline:
