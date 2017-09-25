@@ -2,11 +2,6 @@
 FROM golang:1.8-alpine
 
 RUN apk add -U git && rm -rf /var/cache/apk/*
-RUN mkdir -p $GOPATH/src/github.com/redfactorlabs && \
-    cd $GOPATH/src/github.com/redfactorlabs && \
-    git clone https://github.com/redfactorlabs/concourse-smuggler-resource && \
-    cd concourse-smuggler-resource && \
-    git checkout reorg_project
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
         go get github.com/redfactorlabs/concourse-smuggler-resource
 
