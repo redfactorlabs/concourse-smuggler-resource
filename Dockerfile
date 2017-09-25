@@ -1,21 +1,24 @@
 #
 # Example Dockerfile for smuggler concourse resource.
 #
-# You only need to:
-#  1. Pick your favourite base image
-FROM ubuntu:14.04
+# Build concourse smuggler
+FROM golang:1.8-alpine
 
-#  2. with your favourite tools
-RUN apt-get update && \
-    apt-get install -y ssh-client && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add -U git && rm -rf /var/cache/apk/*
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+        go get github.com/redfactorlabs/concourse-smuggler-resource
 
-#  3. add smuggler command in /opt/resource/
-ADD assets/smuggler-linux-amd64 /opt/resource/smuggler
+# Use your favorite base image
+FROM alpine:3.6
 
-#  4. and link that command to  /opt/resource/{check,in,out}
-RUN ln /opt/resource/smuggler /opt/resource/check && \
-    ln /opt/resource/smuggler /opt/resource/in && \
-    ln /opt/resource/smuggler /opt/resource/out
+# Add some stuff to your container
+RUN apk add --update bash \
+    && rm -rf /var/cache/apk/*
 
+# Add the smuggler binary compiled previously
+COPY --from=0 /go/bin/concourse-smuggler-resource /opt/resource/smuggler
 
+# Link it to the /opt/resource{check,in,out} commands
+RUN ln /opt/resource/smuggler /opt/resource/check \
+    && ln /opt/resource/smuggler /opt/resource/in \
+    && ln /opt/resource/smuggler /opt/resource/out

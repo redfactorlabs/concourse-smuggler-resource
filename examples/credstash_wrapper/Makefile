@@ -2,35 +2,12 @@
 
 DOCKER_HUB_ACCOUNT=redfactorlabs
 
-all: build push
+all: build
 
-clean:
-	rm -rf assets
-
-assets/smuggler:
-	cd ../../ \
-	  && ./scripts/build
-	cp ../../assets/smuggler-linux-amd64 ./assets
-
-assets/unicreds:
-	mkdir -p assets
-	curl -Ls https://github.com/Versent/unicreds/releases/download/1.5.1/unicreds_1.5.1_linux_amd64.tar.gz | tar -xzf - -C ./assets
-	chmod +x ./assets/unicreds
-
-assets/spruce:
-	mkdir -p assets
-	curl -Ls https://github.com/geofffranks/spruce/releases/download/v1.8.15/spruce-linux-amd64 -o ./assets/spruce
-	chmod +x ./assets/spruce
-
-get_assets: assets/unicreds assets/smuggler assets/spruce
-
-build: get_assets
+build:
 	docker build . -f Dockerfile.git-resource -t $(DOCKER_HUB_ACCOUNT)/smuggler-credstash-git-resource
 	docker build . -f Dockerfile.s3-resource -t $(DOCKER_HUB_ACCOUNT)/smuggler-credstash-s3-resource
-	docker build . -f Dockerfile.semver-resource -t $(DOCKER_HUB_ACCOUNT)/smuggler-credstash-semver-resource
 
 push:
 	docker push $(DOCKER_HUB_ACCOUNT)/smuggler-credstash-git-resource
 	docker push $(DOCKER_HUB_ACCOUNT)/smuggler-credstash-s3-resource
-	docker push $(DOCKER_HUB_ACCOUNT)/smuggler-credstash-semver-resource
-

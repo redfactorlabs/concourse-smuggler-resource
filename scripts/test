@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -e
-
-test -z "$(go fmt ./...)"
-
-godep go test ./smuggler ./cmd/smuggler -v $@
