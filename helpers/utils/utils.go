@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -149,4 +151,13 @@ func MergeMaps(a, b interface{}) (interface{}, error) {
 		}
 	}
 	return m, nil
+}
+
+func JsonPrettyPrint(in []byte) []byte {
+	var out bytes.Buffer
+	err := json.Indent(&out, in, "", "  ")
+	if err != nil {
+		return in
+	}
+	return out.Bytes()
 }
