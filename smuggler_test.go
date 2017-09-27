@@ -321,7 +321,7 @@ var _ = Describe("smuggler commands", func() {
 				commandPath, jsonRequest = prepareCommandCheck("a_quiet_command")
 			})
 			It("There are no messages in Stderr", func() {
-				Ω(session.Err.Contents()).To(BeEmpty())
+				Ω(string(session.Err.Contents())).To(BeEmpty())
 			})
 		})
 	})

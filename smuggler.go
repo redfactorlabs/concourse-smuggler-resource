@@ -27,15 +27,22 @@ func main() {
 	logger = tempFileLogger.Logger
 
 	// Read request
-	request := inputRequest(requestType)
+	request, jsonRequest := inputRequest(requestType)
 
 	// Dump logs to stderr if required
 	if request.Source.SmugglerDebug {
 		tempFileLogger.DupToStderr()
+		logger = tempFileLogger.Logger
 	}
 
 	// Execute command
 	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
+
+	logger.Printf(
+		"[INFO] Smuggler command called as:\n%s <<\"EOF\"\n%sEOF",
+		strings.Join(os.Args, " "),
+		utils.JsonPrettyPrint(jsonRequest),
+	)
 
 	response, err := command.RunAction(dataDir, request)
 
@@ -98,7 +105,7 @@ func openSmugglerLog() *utils.TempFileLogger {
 }
 
 // Read input request, merged with the configuration file
-func inputRequest(requestType smuggler.RequestType) *smuggler.ResourceRequest {
+func inputRequest(requestType smuggler.RequestType) (*smuggler.ResourceRequest, []byte) {
 	input, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		utils.Panic("reading request from stdin", err)
@@ -106,7 +113,9 @@ func inputRequest(requestType smuggler.RequestType) *smuggler.ResourceRequest {
 
 	smugglerConfig := findAndReadSmugglerConfig()
 
-	return ParseInputAndConfig(requestType, input, smugglerConfig)
+	r := ParseInputAndConfig(requestType, input, smugglerConfig)
+
+	return r, input
 }
 
 func ParseInputAndConfig(requestType smuggler.RequestType, input []byte, config []byte) *smuggler.ResourceRequest {

@@ -53,8 +53,10 @@ func (command *SmugglerCommand) Run(commandDefinition CommandDefinition, params 
 	}
 	params_env = append(params_env, os.Environ()...)
 
-	command.logger.Printf("[INFO] Running command:\n\tPath: '%s'\n\tArgs: '%s'\n\tEnv:\n\t'%s",
-		path, strings.Join(args, "' '"), strings.Join(params_env, "',\n\t'"))
+	command.logger.Printf(
+		"[INFO] Running command:\n\tPath: '%s'\n\tArgs: '%s'\n\tEnv:\n\t'%s'",
+		path, strings.Join(args, "' '"), strings.Join(params_env, "',\n\t'"),
+	)
 
 	command.lastCommand = exec.Command(path, args...)
 	command.lastCommand.Env = params_env
