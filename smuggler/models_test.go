@@ -23,16 +23,6 @@ var _ = Describe("ResourceRequest", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 		Ω(b).Should(MatchJSON(s))
 	})
-	It("Adding a string version with NewVersion encodes without escaping it", func() {
-		r := ResourceRequest{}
-		v, err := NewVersion("1.2.3")
-		Ω(err).ShouldNot(HaveOccurred())
-		r.Version = *v
-		b, err := r.ToJson()
-
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ID": "1.2.3"},"params":{}}`))
-	})
 	It("populates the Source.ExtraParams with any additional parameter", func() {
 		json, err := pipeline.JsonRequest(InType, "mix_params", "a_job", "1.2.3")
 		Ω(err).ShouldNot(HaveOccurred())
@@ -77,5 +67,49 @@ var _ = Describe("ResourceRequest", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Ω(request.FilteredRequest).Should(BeEquivalentTo(rawRequest))
+	})
+})
+
+var _ = Describe("NewVersion", func() {
+	It("Adding a semantic version with NewVersion would wrap it with the key ID", func() {
+		r := ResourceRequest{}
+		v := NewVersion("1.2.3")
+		r.Version = *v
+		b, err := r.ToJson()
+
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ID": "1.2.3"},"params":{}}`))
+	})
+	It("Passing a map[string]string json to NewVersion would return it directly", func() {
+		r := ResourceRequest{}
+		v := NewVersion(`{"ID": "1.2.3"}`)
+		r.Version = *v
+		b, err := r.ToJson()
+
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ID": "1.2.3"},"params":{}}`))
+	})
+	It("Passing a valid json but not map[string]string to NewVersion would wrop it with the key ID", func() {
+		r := ResourceRequest{}
+		v := NewVersion("1234")
+		r.Version = *v
+		b, err := r.ToJson()
+
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ID": "1234"},"params":{}}`))
+
+		v = NewVersion("a_string")
+		r.Version = *v
+		b, err = r.ToJson()
+
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ID": "a_string"},"params":{}}`))
+
+		v = NewVersion(`{"ID": { "a": 1 } }`)
+		r.Version = *v
+		b, err = r.ToJson()
+
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(b).Should(MatchJSON(`{"source":{},"version":{"ID": "{\"ID\": { \"a\": 1 } }"},"params":{}}`))
 	})
 })

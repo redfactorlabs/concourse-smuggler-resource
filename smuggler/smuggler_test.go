@@ -105,8 +105,7 @@ var _ = Describe("SmugglerCommand actions normal input-output", func() {
 				Ω(command.LastCommandOutput).Should(ContainSubstring("version=1.2.3"))
 			})
 			It("it returns versions as list of strings", func() {
-				vs, err := NewVersions([]string{"1.2.3", "1.2.4"})
-				Ω(err).ShouldNot(HaveOccurred())
+				vs := NewVersions([]string{"1.2.3", "1.2.4"})
 				Ω(response.Versions).Should(BeEquivalentTo(vs))
 			})
 		})
@@ -170,8 +169,7 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 				fixtureResourceName = "write_response_to_stdout"
 			})
 			It("it returns the version IDs", func() {
-				vs, err := NewVersions([]string{"3.2.1", "3.2.2"})
-				Ω(err).ShouldNot(HaveOccurred())
+				vs := NewVersions([]string{"3.2.1", "3.2.2"})
 				Ω(response.Versions).Should(Equal(vs))
 			})
 			It("The stdout buffer is cleared", func() {
@@ -274,8 +272,7 @@ var _ = Describe("SmugglerCommand actions stdin/stdout input-output", func() {
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
 			It("it returns the version ID", func() {
-				v, err := NewVersion("3.2.1")
-				Ω(err).ShouldNot(HaveOccurred())
+				v := NewVersion("3.2.1")
 				Ω(response.Version).Should(Equal(*v))
 			})
 		})
@@ -326,8 +323,7 @@ var _ = Describe("SmugglerCommand params", func() {
 			Ω(m["complex_param"]).Should(MatchJSON(expectedJson))
 		})
 		It("should send the version param as a serialized json", func() {
-			v, err := NewVersion("someid")
-			Ω(err).ShouldNot(HaveOccurred())
+			v := NewVersion("someid")
 			Ω(response.Version).Should(BeEquivalentTo(*v))
 		})
 	})
@@ -483,8 +479,7 @@ func InOutCommonSmugglerTests() func() {
 				Ω(response.Metadata).Should(BeEquivalentTo(vs))
 			})
 			It("it returns the version ID", func() {
-				v, err := NewVersion("1.2.3")
-				Ω(err).ShouldNot(HaveOccurred())
+				v := NewVersion("1.2.3")
 				Ω(response.Version).Should(BeEquivalentTo(*v))
 			})
 		})

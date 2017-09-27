@@ -244,11 +244,7 @@ func readVersions(versionsFile string) ([]Version, error) {
 		return result, err
 	} else {
 		for _, l := range versionLines {
-			v, err := NewVersion(l)
-			if err != nil {
-				return result, err
-			}
-			result = append(result, *v)
+			result = append(result, *NewVersion(l))
 		}
 	}
 	return result, nil

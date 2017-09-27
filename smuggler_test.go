@@ -88,8 +88,7 @@ var _ = Describe("smuggler commands", func() {
 				var response []Version
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs, err := NewVersions([]string{"1.2.3", "1.2.4"})
-				Ω(err).ShouldNot(HaveOccurred())
+				vs := NewVersions([]string{"1.2.3", "1.2.4"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -214,8 +213,7 @@ var _ = Describe("smuggler commands", func() {
 				var response []Version
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs, err := NewVersions([]string{"1.2.3", "1.2.4"})
-				Ω(err).ShouldNot(HaveOccurred())
+				vs := NewVersions([]string{"1.2.3", "1.2.4"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -245,8 +243,7 @@ var _ = Describe("smuggler commands", func() {
 				var response []Version
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs, err := NewVersions([]string{"4.5.6", "4.5.7"})
-				Ω(err).ShouldNot(HaveOccurred())
+				vs := NewVersions([]string{"4.5.6", "4.5.7"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -269,8 +266,7 @@ var _ = Describe("smuggler commands", func() {
 				var response []Version
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs, err := NewVersions([]string{"1.2.3", "1.2.4"})
-				Ω(err).ShouldNot(HaveOccurred())
+				vs := NewVersions([]string{"1.2.3", "1.2.4"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -294,8 +290,7 @@ var _ = Describe("smuggler commands", func() {
 				var response []Version
 				err := json.Unmarshal(session.Out.Contents(), &response)
 				Ω(err).ShouldNot(HaveOccurred())
-				vs, err := NewVersions([]string{"4.5.6", "4.5.7"})
-				Ω(err).ShouldNot(HaveOccurred())
+				vs := NewVersions([]string{"4.5.6", "4.5.7"})
 				Ω(response).Should(BeEquivalentTo(vs))
 			})
 
@@ -388,8 +383,7 @@ func InOutCommonSmugglerTests(session **gexec.Session) func() {
 			var response ResourceResponse
 			err := json.Unmarshal((*session).Out.Contents(), &response)
 			Ω(err).ShouldNot(HaveOccurred())
-			v, err := NewVersion("1.2.3")
-			Ω(err).ShouldNot(HaveOccurred())
+			v := NewVersion("1.2.3")
 			Ω(response.Version).Should(BeEquivalentTo(*v))
 		})
 		It("outputs a valid json with a version", func() {

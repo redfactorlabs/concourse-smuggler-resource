@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"encoding/json"
+
 	"github.com/ghodss/yaml"
 
 	. "github.com/redfactorlabs/concourse-smuggler-resource/smuggler"
@@ -84,10 +85,7 @@ func (pipeline *Pipeline) JsonRequest(requestType RequestType, resource_name str
 	}
 
 	if requestType == InType || requestType == CheckType {
-		v, err := NewVersion(version)
-		if err != nil {
-			return "", fmt.Errorf("Failed encoding version %q: %+v", err, request)
-		}
+		v := NewVersion(version)
 		request.Version = *v
 	}
 

@@ -135,33 +135,24 @@ func (v Version) ToString() string {
 	return string(b)
 }
 
-func NewVersion(s string) (*Version, error) {
+func NewVersion(s string) *Version {
 	var v Version
 
 	err := json.Unmarshal([]byte(s), &v)
 	if err != nil {
-		switch err.(type) {
-		case *json.SyntaxError:
-			v = make(Version)
-			v["ID"] = s
-		default:
-			return nil, err
-		}
+		v = make(Version)
+		v["ID"] = s
 	}
-	return &v, nil
+	return &v
 }
 
-func NewVersions(sl []string) ([]Version, error) {
+func NewVersions(sl []string) []Version {
 	var vs []Version
 	vs = make([]Version, 0, len(sl))
 	for _, s := range sl {
-		v, err := NewVersion(s)
-		if err != nil {
-			return vs, err
-		}
-		vs = append(vs, *v)
+		vs = append(vs, *NewVersion(s))
 	}
-	return vs, nil
+	return vs
 }
 
 type TaskParams struct {
