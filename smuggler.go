@@ -39,7 +39,7 @@ func main() {
 	command := smuggler.NewSmugglerCommand(tempFileLogger.Logger)
 
 	logger.Printf(
-		"[INFO] Smuggler command called as:\n%s <<\"EOF\"\n%sEOF",
+		"[INFO] Smuggler command called as:\n%s <<\"EOF\"\n%s\nEOF",
 		strings.Join(os.Args, " "),
 		utils.JsonPrettyPrint(jsonRequest),
 	)
