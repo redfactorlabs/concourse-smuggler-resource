@@ -1,0 +1,72 @@
+commands:
+  check: &common_script |
+    cat <<EOF 1>&2
+
+    Thank you for using smuggler!
+
+    NOTE: The current default implementation will just FAIL, in order
+          to print this message :). Define the '${SMUGGLER_COMMAND}' command.
+
+    The '${SMUGGLER_COMMAND}' command is not defined. You can define one this way:
+
+        - name: ${RESOURCE_NAME:-foo}
+          type: smuggler
+          source:
+            smuggler_debug: true # For debugging, remove later
+            commands:
+              ${SMUGGLER_COMMAND}: |
+                # Write here your logic
+                version="\$(curl -qs http://company.com/service | jq .a_value)"
+                echo "\${version}" > \${SMUGGLER_OUTPUT_DIR}/versions
+            param_1: value
+            param_2: value
+
+    Parameters would be passed as 'SMUGGLER_<param>' variables.
+    You currently have these variables available:
+
+    $(env | sed '/^PATH=/d;/^SHLVL=/d;/HOME=/d;/^_=/d;/^no_proxy=/d;/^USER=/d;/^PWD=/d;s/^/    /')
+
+    EOF
+
+    case ${SMUGGLER_COMMAND} in
+    check)
+      cat <<EOF 1>&2
+    To report back your versions found you can:
+      - write the versions as plaintext lines in \${SMUGGLER_OUTPUT_DIR}/versions
+      - write the metadata as key=value pairs in \${SMUGGLER_OUTPUT_DIR}/metadata
+      - or print a valid json as stdout as in https://concourse.ci/implementing-resources.html
+
+    EOF
+      ;;
+    in|out)
+      cat <<EOF 1>&2
+    To report back the new version and metadata you can:
+      - write the versions as plaintext lines in \${SMUGGLER_OUTPUT_DIR}/versions
+      - write the metadata as key=value pairs in \${SMUGGLER_OUTPUT_DIR}/metadata
+      - or print a valid json as stdout as in https://concourse.ci/implementing-resources.html
+
+    EOF
+    esac
+
+    case ${SMUGGLER_COMMAND} in
+    in)
+      cat <<EOF 1>&2
+    You can find the requested version in the variables \${SMUGGLER_VERSION_<key>}
+
+    Write the retrieved resource data into \${SMUGGLER_DESTINATION_DIR}
+
+    EOF
+      ;;
+    out)
+      cat <<EOF 1>&2
+    You can find the requested version in the variables \${SMUGGLER_VERSION_<key>}
+
+    Read the outputs from previous steps in the job from \${SMUGGLER_SOURCES_DIR}
+
+    EOF
+    esac
+
+    exit 1
+
+  in: *common_script
+  out: *common_script
