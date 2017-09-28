@@ -1,274 +1,264 @@
 [![Build Status](https://travis-ci.org/redfactorlabs/concourse-smuggler-resource.svg?branch=master)](https://travis-ci.org/redfactorlabs/concourse-smuggler-resource)
 
-# concourse-smuggler-resource
+# concourse-smuggler-resource: Concourse generic resource
 
-Concourse generic resource, to quickly implement any kind of resource by
-defining any command for the `check`, `get` and `put` actions.
+Smuggler is *"generic-resource"*, that allows you to quickly
+implement any concourse eresource with minimum boilerplate, even
+in the pipeline itself.
+
+Smuggler will basically:
+
+ 1. parse the input JSON from concourse
+ 2. set environment variables with the parameters
+ 3. execute the provided shell script
+ 4. parse the output and create a valid response for concourse.
 
 *Smuggler* is ideal for PoC, prototyping, fast development or implementation
-of simple resources based on existing command line tools, hacking or extending
-existing resources, etc.
+of simple resources.
 
-## Resource definition
+## Basic example
 
-> Note: It is recommended that you have a look at how [custom resources are implemented](https://concourse.ci/implementing-resources.html)
+The following resource definition will generate random numbers using
+the [sh `${RANDOM}` variable](http://tldp.org/LDP/abs/html/randomvar.html).
 
-You can easily register smuggler as a service by using
-[custom resource type definitions](https://concourse.ci/configuring-resource-types.html):
-
-First build the container:
-
-```
-# You want to replece it with your own Docker repository. 
-export SMUGGLER_DOCKER_REPOSITORY=redfactorlabs/concourse-smuggler-resource
-# A Docker tag for that container
-export SMUGGLER_DOCKER_TAG=ubuntu-14.04
-./scripts/build-docker
-```
-
-> We will eventually distribute some prebuilt images, but right now
-> is better you build your own.
+`get` in the job `some_job` writes the random number in the file specified
+by the parameter `params.target_file`. It also provides the current date in
+the metadata.
 
 ```
+# Add the custom resource type
+# See https://concourse.ci/configuring-resource-types.html
 resource_types:
 - name: smuggler
   type: docker-image
   source:
-    # Replace the url
-    repository: redfactorlabs/concourse-smuggler-resource:ubuntu-14.04
+    repository: redfactorlabs/concourse-smuggler-resource
+    tag: alpine3.6
+
+resources:
+# A randon number generator
+- name: random_number_generator
+  type: smuggler
+  source:
+    smuggler_debug: true
+    target_file: random_number_file
+    commands:
+      check: |
+        echo "${RANDOM}" > ${SMUGGLER_OUTPUT_DIR}/versions
+      in: |
+        echo "${SMUGGLER_VERSION_ID}" > \
+          ${SMUGGLER_DESTINATION_DIR}/${SMUGGLER_target_file}
+        echo "date=$(date)" > ${SMUGGLER_OUTPUT_DIR}/metadata
+
+jobs:
+# A example job using our new resource
+- name: some_job
+  plan:
+  - get: random_number_generator
+    trigger: true
+  - task: print_the_number
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alpine
+      inputs:
+      - name: random_number_generator
+        params:
+          target_file: my_random_number_file
+      run:
+        path: sh
+        args:
+        - -ec
+        - |
+          cat random_number_generator/my_random_number_file
 ```
 
-Modify `Dockerfile` to build your own container image bundled with smuggler.
+# Other examples
 
-As it is a unique static compiled binary it should work on any distribution
-with any tools and scripts you need to create your custom resource.
+Check [the examples directory](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples)
+for examples of hacks and resources.
 
-See below for more details.
+Some to highlight:
 
-## Source configuration and tasks
+ * [ssh-keygen resource](https://github.com/redfactorlabs/concourse-smuggler-resource/blob/master/examples/ssh-keygen/pipeline.yml)
+ * [ssh-keygen-s3 resource](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples/ssh-keygen-s3): Generates a SSH key and stores it in S3.
+ * [s3-with-default resource](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples/s3-with-default): Extends the official S3 resource to allow define a default value if the object is missing.
 
-Once your `smuggler` is defined as a resource type, you only need to define
-your resource using this structure:
+# Using concourse 
+
+## Defining `check/in/out` commands
+
+Use `commands.check`, `commands.in` or `commands.out` to
+provide the script to execute. All of them are optional:
+
+ * `commands.check`: Called to check and find new versions.
+    Write the versions to `${SMUGGLER_OUTPUT_DIR}/versions`, one line for each version.
+
+ * `commands.in`: called by the [`get` step](https://concourse.ci/get-step.html)
+    to fetch a resource. Write the data into `${SMUGGLER_DESTINATION_DIR}`
+
+ * `commands.out`: called by the [`put` step](https://concourse.ci/put-step.html)
+    to upload the resource.
+    The input files from previous steps in the job would be in `${SMUGGLER_SOURCES_DIR}`
+
+## Input & output
+
+The  `check/in/out` scripts communicate with smuggler/concourse via:
+
+ * Environment variables:
+
+   | Variable                   | example               | available in   | description |
+   |----------------------------|-----------------------|----------------|-------------|
+   | `SMUGGLER_<param_name>`    | `SMUGGLER_id_rsa`     | `check/in/out` | Parameters from `source.*` or `params.*` |
+   | `SMUGGLER_VERSION_<key>`   | `SMUGGLER_VERSION_ID` | `check/in`     | Environment variable with the latest resource version retrieved. \\ Not be defined in first run of `check`. |
+   | `SMUGGLER_OUTPUT_DIR`      |                       | `check/in/out` | The directory to write versions and metadata. |
+   | `SMUGGLER_DESTINATION_DIR` |                       | `in`           | The directory to write the retrieved data to. |
+   | `SMUGGLER_SOURCES_DIR`     |                       | `out`          | The directory with files from previous steps in the job |
+
+   > **Important**: Note that `SMUGGLER_OUTPUT_DIR` with
+   > `SMUGGLER_DESTINATION_DIR` or `SMUGGLER_SOURCES_DIR` are
+   > different directories.
+
+ * `${SMUGGLER_OUTPUT_DIR}/versions`: For `check/in/out`.
+   * **Optional**, only processed if no json is written in `stdout`.
+   * Smuggler will automatically  add the default key `ID`.
+   * Restrictions:
+     * `check`: Your command **must** write here the versions found, one line per version.
+     * `in`: Optional, if no version is written, smuggler will use the same as
+       passed to the command as input.
+       Only the first line is taken into account.
+     * `out`: *Mandatory*, you must always specify a version for out, as
+       concourse does not provide the version in the input.
+       Only the first line is taken into account.
+
+ * `${SMUGGLER_OUTPUT_DIR}/metadata`: For `in/out` *Optional.* the
+   metadata for concourse as a multiline file with `key=value` pairs.
+
+ * `${SMUGGLER_DESTINATION_DIR}/`: For `in`.
+   The directory to write the retrieved data to.
+
+ * `${SMUGGLER_SOURCES_DIR}/*/*`: For `out`. The directories with files from previous steps in the job.
+
+ * `stdin`: For `check/in/out`. Raw JSON with as it is
+   sent from concourse and [as described in the implementing concourse resources documentation.](https://concourse.ci/implementing-resources.html)
+
+   This allows your command parse the request directly, or pass it to a
+   wrapped resource.
+
+   > **Note**: If `filter_raw_request: true`, all the specific smuggler
+   > configuration will be filtered out (`source.commands`,
+   > `source.smuggler_params`, `params.smuggler_params`, etc.).
+
+ * `stdout`: For `check/in/out`, **Optional**. verbatim JSON response
+   request [as described in the implementing concourse resources documentation.](https://concourse.ci/implementing-resources.html)
+
+   > **Note**: if you print anything to stdout that is not JSON, the output
+   > will be not be passed to concourse, but instead dump to `stderr`.
+
+## Resource parameters
+
+Any additional parameter in the `source` of the definition,
+or passed to the `get` or `put` step as params, would be passed as environment
+variables to the script with the prefix `SMUGGLER_`.
+e.g.`SMUGGLER_param1=value1`, `SMUGGLER_param2=value2`.
+
+For example in this definition:
 
 ```
 resources:
-- name: my_smuggler_resource
+- name: random_number_generator
   type: smuggler
   source:
     commands:
-      check:
-        path: <command>
-        args:
-        - ...
-      in:
-        path: <command>
-        args:
-        - ...
-      out: "<command> <args>"
-
-    filter_raw_request: true
-
-    smuggler_params:
-    - key1: value1
-    - key2: value2
-    - ...
-
-    # Additional random non smuggler source parameters
-    other_param_key1: value1
-    other_param_key2: value2
-    ...
-
+      check: |
+        ...
+      in: |
+        ...
+    global_config_entry: value1
 
 jobs:
 - name: some_job
   plan:
-
-  - get: my_smuggler_resource
+  - get: random_number_generator
+    trigger: true
     params:
-      smuggler_params:
-        # Override the existing key
-        key1: other_value1
-      # Additional random non smuggler source parameters
-      key3: value3
-
-  - put: my_smuggler_resource
-    params:
-      smuggler_params:
-        # Override the existing key
-        key1: other_value1
-      # Additional random non smuggler source parameters
-      key3: value3
-
+      specific_get_config_entry: value2
 ```
 
-The `source` configuraton includes:
+Smuggler would set `SMUGGLER_global_config_entry` for `check` and `in`, and
+`SMUGGLER_specific_get_config_entry` for the `in` command.
 
- * `commands`: definition of the
-   commands `check/in/out` called from concourse to `check` new
-   versions and `get` or `put` resources.
+## Smuggler specific parameters
 
-   It can be defined as:
+Smuggler understands these parameters:
 
-    * Single string: Each one gets the command in one string which will
-      shell out to `bash -o -u -o pipefail -c <cmd>` or `sh -o -u -c <cmd>`.
-      If none of `bash` or `sh` is found, the command will be executed directly.
+ * `commands.{check,in,out}` to define the commands as described above.
 
-    * as a hash of `path` and `args` similar to [concourse task
-      `run` definition](https://concourse.ci/running-tasks.html#run)
+ * `smuggler_debug: [true|false]`. *Optional*. it will print debugging
+   information to the `stderr`.
 
-> All commands are *optional*, and if not defined they will execute a
-> dummy operation (Of course you always want to define at least one ;)).
+ * `filter_raw_request: [true|false]`: *Optional*. Would remove the
+   smuggler specific parameters from the JSON passed via `stdin` to
+   the script.
 
- * `filter_raw_request`: Filter the smuggler specific config from the
-   verbatin json request passed via `stdin` to the commands.
+ * `smuggler_params.<param>`: *Optional*. Allows group the parameters so they can filtered
+   out with `filter_raw_request`.
 
- * `smuggler_params`: **Optional**. List of key-value pairs to pass to
-   all the commands.
+## Parameter priorities
 
-   All these parameters will be passed as environment variables prefixed with
-   `SMUGGLER_`: `SMUGGLER_key1=value1`, `SMUGGLER_key2=value2`
+Parameters can be defined in different places so parameters
+with the same name would be overridden depending where they are declared 
+(first has more priority)
 
- * Any additional parameter in the source, like `other_param_key1` or
-   `other_param_key1` will be threated as `source.smuggler_params`, but will not
-   be filtered when `filter_raw_request` is enabled.
+ 1. `/opt/resource/smuggler.yml` in the docker image.
+ 1. resource definition, `source.smuggler_params.<param>`
+ 1. resource definition, `source.<param>`
+ 1. `get/put` step, `params.smuggler_params.<param>`
+ 1. `get/put` step, `params.<param>`
 
-   These keys will override any value in `source.smuggler_params` with the same key.
+This allows easily define default values for parameters in your resources.
 
- * `smuggler_debug` will print debugging information to the Stderr
+## Logging and troubleshooting
 
-The `get/put` task configuration includes:
+All the operations would log into `/tmp/smuggler.log` in the container. Use
+the parameter `smuggler_debug: true` to print the log to `stderr`
+that would display the log in the concourse UI.
 
- * `smuggler_params`: **Optional**. Similar to `source.smuggler_params`,
-   list of key-value pairs to pass to the command as environment variables
-   prefixed with `SMUGGLER_`.
-
-   They will have precedence any parameter in `source`.
-
- * Any additional parameter in the source, will be threated as
-   `params.smuggler_params`, but will not be filtered when `filter_raw_request`
-   is enabled.
-
-
-## Behavior
-
-You can use any of the tasks related to this resource: `check`, `get` and `put`.
-
-## Shared input for `check`, `in` and `out`
-
-Each command will get some input via environment variables or `stdin`:
-
- * `SMUGGLER_<param_name>`: For `check/in/out`. Environment variables with the
-   prefixed source parameters under `source.smuggler_params` or directly
-   `source`.
-
-   For `in/out` will also include the parameters under `params.smuggler_params`
-   or `params`
-
- * `SMUGGLER_VERSION_<key>`: For `check/in` Environment variable with the latest
-   resource version, one version per key-value pair in the version.
-   They will not be defined if it is first run of `check`.
-
- * `SMUGGLER_VERSION_ID`: Default version variable when using plain string
-   versions (see below for output details).
-
- * `SMUGGLER_OUTPUT_DIR`: For `check/in/out`. The directory path to write the
-   resulting versions and metadata when not using `stdout`.
-
- * `SMUGGLER_DESTINATION_DIR`: For `in`. The directory path to write the data to.
-
- * `SMUGGLER_SOURCES_DIR`: For `out`. The directory path with the
-   build's full set of sources.
-
-> **Important**: do not mix up `SMUGGLER_OUTPUT_DIR` with
-> `SMUGGLER_DESTINATION_DIR` or `SMUGGLER_SOURCES_DIR`
-
- * `stdin`: For `check/in/out`. Verbatin json with all the structure as is
-   sent from concourse. This allows your command parse the request directly.
-
-   If `source.filter_raw_request` is `true`, all the specific smuggler
-   configuration will be filtered out (`source.commands`,
-   `source.smuggler_params`, `params.smuggler_params`, etc.). This is useful
-   when wrapping third party resources (see below).
-
-Output to send to concourse to the commands:
-
- * `stdout`: For `check/in/out`,  **Optional**. the verbatin JSON response
-    request [as described in the implementing concourse resources documentation.]
-    (https://concourse.ci/implementing-resources.html)
-
-> **Note** if you print to stdout and it is not JSON, the output will be not
-> be used to generate the version, but instead printed to stderr.
-
- * `${SMUGGLER_OUTPUT_DIR}/versions`: For `check/in`.
-   * **Optional**, only processed if no json is written in `stdout`.
-   * Smuggler will add the default key `ID`.
-   * For `check`: Your command **must** write here the versions found, one line per version.
-   * For `in`: If no version is written, smuggler will use the same as
-     passed to the command. Only the first line will be taken into account.
-
- * `${SMUGGLER_OUTPUT_DIR}/metadata`: For `in/out` *Optional.* the
-   metadata for concourse as a multiline file with `key=value` pairs
-   separated by `=`.
-
- * `${SMUGGLER_OUTPUT_DIR}/versions`: For `check/in`.
-   * **Optional**, only processed if no json is written in `stdout`.
-   * For `check`: Your command **must** write here the versions found, one line per version.
-   * For `in`: If no version is written, smuggler will use the same as
-     passed to the command. Only the first line will be taken into account.
-   * If each line is a valid JSON, they will be interpreted.
-
-### `check` Find out what you want to smuggle
-
-Will execute the command configured as `check`.
-
-### `get` and `put` smuggle into and out concourse
-
-Will execute the commands configured as `in` and `out` respectively.
-
-## Complex commands and inline scripts
-
-You can smuggle even more if you use inline scripts included as
-[multiline literal strings in yaml](http://www.yaml.org/spec/1.2/spec.html#id2795688)
-in your command definition:
+You can [intercept the container](https://concourse.ci/fly-intercept.html)
+to read the log or interact with the commands directly:
 
 ```
-check:
-  path: sh
-  args:
-  # sh reads commands from next argument with -c
-  - -c
-  # all the script goes here
-  - |
-    echo "this is"
-    echo "a multiline script \o/"
+fly -t demo intercept -c pipeline_name/resource_name # intercept a check
+
+fly -t demo intercept -j pipeline_name/job_nome # intercept a get/put
 ```
 
-This way you pass almost any embedded script language in your scripts, like
-`bash`, `python`, `perl`, `ruby`...
+In `/tmp/smuggler.log` you can find the exact command used to call the resource,
+so you can execute it again by copy&paste for quick troubleshooting:
 
-For example:
-
- * `bash/sh` with `-c` option:
-   ```
-resources:
-- name: generate-ssh-key
-  type: smuggler
-  source:
-    commands:
-      out:
-        path: sh
-        path: <command>
-        args:
-        - -e
-        - -c
-        - |
-          ssh-keygen -f id_rsa -N ''
-          tar -cvzf $SMUGGLER_DESTINATION_DIR/id_rsa.tar.gz id_rsa id_rsa.tgz
+```
+2017/09/27 23:23:32 [INFO] Smuggler command called as:
+/opt/resource/in /tmp/build/get <<"EOF"
+{
+  "source": {
+    "commands": {
+      "check": "echo \"${RANDOM}\" \u003e ${SMUGGLER_OUTPUT_DIR}/versions\n",
+      "in": "echo \"${SMUGGLER_VERSION_ID}\" \u003e ${SMUGGLER_DESTINATION_DIR}/random_number\n"
+    },
+    "smuggler_debug": true
+  },
+  "version": {
+    "ID": "1480"
+  }
+}
+EOF
 ```
 
 # Advanced usage
 
-## Bundle smuggler configuration in `/opt/resource/smuggler.yml` in resource image
+## Bundle smuggler configuration into the docker image 
 
 You can optionally write the same configuration of the `source` section in
 the resource container image, in `/opt/resource/smuggler.yml`.
@@ -277,19 +267,20 @@ The content of that file will be merged with the request, so that any parameter
 and command defined in the pipeline, will override the ones defined in
 `smuggler.yml`.
 
-This enables you to encapsulate all the implementation and not expose
-it in the pipelines, keeping the pipeline simple and letting you to
-distribute and reuse the resource as desired.
+This way smuggler becomes a framework to create any kind of resource with
+very little boilerplate.
 
 ## Wrapping other resources with smuggler
 
-As mention, you can read the raw JSON request from concourse from `stdin`, and write
-it directly the response to `stdout`. Additionally, with `source.filter_raw_request`
-all the smuggler config will be removed from the request.
+Smuggler passes the raw JSON request from concourse from `stdin` and
+returns back the response from `stdout` (if it is a valid response).
 
-With these features, it is really easy to wrap any third party resource and
-change their behaviour, you only need to bundle the resource in your image
-and shell out the resource.
+Additionally, with `source.filter_raw_request` all the smuggler config
+will be strip from the request in `stdin`.
+
+This way it is really easy to wrap any third party resource and
+change their behaviour. Simply copy the other resource commands in your
+image and call them directly.
 
 For example, use S3 resource to generate some default content if the file is
 not in the bucket, and behave as usual otherwise:
@@ -315,10 +306,20 @@ commands:
   out: /opt/resource/wrapped/s3/out ${SMUGGLER_SOURCES_DIR}
 ```
 
-# Examples
+## Complex commands and inline scripts
 
-Check [the examples directory](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples)
-for examples of hacks and resources.
+Commands can be defined using these two syntaxes:
+
+ 1. a `bash`/`sh` script using [multiline literal strings in yaml](http://www.yaml.org/spec/1.2/spec.html#id2795688)
+
+    This is great for simple bash scripts.
+
+ 2. A hash with `path: <string>` and `args: [<string>, ...]`
+
+    This would allow you to use any embedded scripting language in your
+    definition, like `bash`, `python`, `perl`, `ruby`...
+
+
 
 # Contributions
 
