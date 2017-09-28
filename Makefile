@@ -1,4 +1,4 @@
-SMUGGLER_DOCKER_TAG:=ubuntu-14.04
+SMUGGLER_DOCKER_TAG:=alpine3.6
 SMUGGLER_DOCKER_REPOSITORY:=redfactorlabs/concourse-smuggler-resource
 SMUGGLER_DOCKER_IMAGE:=$(SMUGGLER_DOCKER_REPOSITORY):$(SMUGGLER_DOCKER_TAG)
 
@@ -27,7 +27,7 @@ assets/smuggler-linux-amd64: $(GO_FILES)
 		go build -o $@ .
 
 build-docker: test
-	docker build -t "${SMUGGLER_DOCKER_IMAGE}" .
+	docker build --no-cache -t "${SMUGGLER_DOCKER_IMAGE}" .
 
 push-docker: build-docker
 	docker push "${SMUGGLER_DOCKER_IMAGE}"
