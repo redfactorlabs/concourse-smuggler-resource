@@ -3,7 +3,7 @@
 # concourse-smuggler-resource: Concourse generic resource
 
 Smuggler is a *"generic-resource"*, that allows you to quickly
-implement any concourse eresource with minimum boilerplate, even
+implement any concourse resource with minimum boilerplate, even
 in the pipeline itself.
 
 It allows you to run any random command/script into the resource
