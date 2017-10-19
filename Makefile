@@ -2,6 +2,9 @@ SMUGGLER_DOCKER_TAG:=alpine3.6
 SMUGGLER_DOCKER_REPOSITORY:=redfactorlabs/concourse-smuggler-resource
 SMUGGLER_DOCKER_IMAGE:=$(SMUGGLER_DOCKER_REPOSITORY):$(SMUGGLER_DOCKER_TAG)
 
+SMUGGLER_GIT_URL:=https://github.com/redfactorlabs/concourse-smuggler-resource
+SMUGGLER_GIT_BRANCH:=master
+
 GO_PACKAGES = $(shell go list ./... | grep -v vendor)
 GO_FILES = $(shell find . -name "*.go" | grep -v vendor | uniq)
 
@@ -27,7 +30,10 @@ assets/smuggler-linux-amd64: $(GO_FILES)
 		go build -o $@ .
 
 build-docker: test
-	docker build --no-cache -t "${SMUGGLER_DOCKER_IMAGE}" .
+	docker build --no-cache \
+		--build-arg SMUGGLER_GIT_URL \
+		--build-arg SMUGGLER_GIT_BRANCH \
+		-t "${SMUGGLER_DOCKER_IMAGE}" .
 
 push-docker: build-docker
 	docker push "${SMUGGLER_DOCKER_IMAGE}"
