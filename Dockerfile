@@ -4,7 +4,7 @@
 #
 # Build concourse smuggler
 #
-FROM golang:1.8-alpine
+FROM golang:1.9-alpine
 
 ARG SMUGGLER_GIT_URL=https://github.com/redfactorlabs/concourse-smuggler-resource
 ARG SMUGGLER_GIT_BRANCH=master

@@ -1,5 +1,5 @@
 # Build concourse smuggler
-FROM golang:1.8-alpine
+FROM golang:1.9-alpine
 RUN apk add -U git && rm -rf /var/cache/apk/*
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
         go get github.com/redfactorlabs/concourse-smuggler-resource
