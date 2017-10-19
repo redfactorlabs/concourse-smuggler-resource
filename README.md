@@ -2,7 +2,7 @@
 
 # concourse-smuggler-resource: Concourse generic resource
 
-Smuggler is *"generic-resource"*, that allows you to quickly
+Smuggler is a *"generic-resource"*, that allows you to quickly
 implement any concourse eresource with minimum boilerplate, even
 in the pipeline itself.
 
