@@ -29,7 +29,7 @@ assets/smuggler-linux-amd64: $(GO_FILES)
 	GOARCH=amd64 \
 		go build -o $@ .
 
-build-docker: test
+build-docker:
 	docker build --no-cache \
 		--build-arg SMUGGLER_GIT_URL \
 		--build-arg SMUGGLER_GIT_BRANCH \

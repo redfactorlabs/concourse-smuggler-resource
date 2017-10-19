@@ -9,7 +9,7 @@ FROM golang:1.8-alpine
 ARG SMUGGLER_GIT_URL=https://github.com/redfactorlabs/concourse-smuggler-resource
 ARG SMUGGLER_GIT_BRANCH=master
 
-RUN apk add -U git && rm -rf /var/cache/apk/*
+RUN apk add -U git bash && rm -rf /var/cache/apk/*
 
 # Clone the right repo and branch
 RUN mkdir -p /go/src/github.com/redfactorlabs/concourse-smuggler-resource && \
@@ -17,7 +17,9 @@ RUN mkdir -p /go/src/github.com/redfactorlabs/concourse-smuggler-resource && \
     cd /go/src/github.com/redfactorlabs/concourse-smuggler-resource && \
     git checkout $SMUGGLER_GIT_BRANCH
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+RUN cd /go/src/github.com/redfactorlabs/concourse-smuggler-resource && \
+    go test $(go list ./... | grep -v vendor) -v && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
         go build -o /go/bin/concourse-smuggler-resource \
         github.com/redfactorlabs/concourse-smuggler-resource
 
