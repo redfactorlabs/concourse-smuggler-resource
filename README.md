@@ -6,6 +6,9 @@ Smuggler is *"generic-resource"*, that allows you to quickly
 implement any concourse eresource with minimum boilerplate, even
 in the pipeline itself.
 
+It allows you to run any random command/script into the resource
+container for the `check/in/out`.
+
 Smuggler will basically:
 
  1. parse the input JSON from concourse
@@ -33,7 +36,7 @@ resource_types:
   type: docker-image
   source:
     repository: redfactorlabs/concourse-smuggler-resource
-    tag: alpine3.6
+    tag: alpine
 
 resources:
 # A randon number generator
@@ -86,7 +89,7 @@ Some to highlight:
  * [ssh-keygen-s3 resource](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples/ssh-keygen-s3): Generates a SSH key and stores it in S3.
  * [s3-with-default resource](https://github.com/redfactorlabs/concourse-smuggler-resource/tree/master/examples/s3-with-default): Extends the official S3 resource to allow define a default value if the object is missing.
 
-# Using concourse 
+# Using smuggler-concourse
 
 ## Defining `check/in/out` commands
 
@@ -209,7 +212,7 @@ Smuggler understands these parameters:
 ## Parameter priorities
 
 Parameters can be defined in different places so parameters
-with the same name would be overridden depending where they are declared 
+with the same name would be overridden depending where they are declared
 (first has more priority)
 
  1. `/opt/resource/smuggler.yml` in the docker image.
@@ -258,7 +261,7 @@ EOF
 
 # Advanced usage
 
-## Bundle smuggler configuration into the docker image 
+## Bundle smuggler configuration into the docker image
 
 You can optionally write the same configuration of the `source` section in
 the resource container image, in `/opt/resource/smuggler.yml`.
@@ -320,6 +323,10 @@ Commands can be defined using these two syntaxes:
     definition, like `bash`, `python`, `perl`, `ruby`...
 
 
+## Supported tags and Dockerfiles
+
+ * `alpine` or `x.x.x-alpine` [Dockerfile.alpine](https://github.com/redfactorlabs/concourse-smuggler-resource/blob/master/Dockerfile.alpine)
+ * `ubuntu` or `x.x.x-ubuntu` [Dockerfile.ubuntu](https://github.com/redfactorlabs/concourse-smuggler-resource/blob/master/Dockerfile.ubuntu)
 
 # Contributions
 
