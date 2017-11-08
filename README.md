@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/redfactorlabs/concourse-smuggler-resource.svg?branch=master)](https://travis-ci.org/redfactorlabs/concourse-smuggler-resource)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fredfactorlabs%2Fconcourse-smuggler-resource.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fredfactorlabs%2Fconcourse-smuggler-resource?ref=badge_shield)
 
 # concourse-smuggler-resource: Concourse generic resource
 
@@ -338,3 +339,7 @@ See the [AUTHORS](AUTHORS.md) file for contributions.
 
 I stoled a lot of code around in github, specially from other resources
 like `s3-resource`. Thanks to all of you!
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fredfactorlabs%2Fconcourse-smuggler-resource.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fredfactorlabs%2Fconcourse-smuggler-resource?ref=badge_large)
