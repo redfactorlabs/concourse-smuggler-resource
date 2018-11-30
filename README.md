@@ -59,6 +59,8 @@ jobs:
   plan:
   - get: random_number_generator
     trigger: true
+    params:
+      target_file: my_random_number_file
   - task: print_the_number
     config:
       platform: linux
@@ -68,8 +70,6 @@ jobs:
           repository: alpine
       inputs:
       - name: random_number_generator
-        params:
-          target_file: my_random_number_file
       run:
         path: sh
         args:
