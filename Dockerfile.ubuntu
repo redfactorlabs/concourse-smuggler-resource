@@ -1,7 +1,7 @@
 #
 # Build concourse smuggler
 #
-FROM golang:1.9-alpine
+FROM golang:1.18-alpine
 
 COPY .  /go/src/github.com/redfactorlabs/concourse-smuggler-resource
 
@@ -17,7 +17,7 @@ RUN cd /go/src/github.com/redfactorlabs/concourse-smuggler-resource && \
 # Build the resource image
 #
 
-FROM ubuntu:16.04
+FROM ubuntu:22.04
 
 # Add some stuff to your container
 # Our base container will have some handy tooling
