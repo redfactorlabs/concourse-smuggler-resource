@@ -39,13 +39,5 @@ push-docker: build-docker
 	docker push "${SMUGGLER_DOCKER_IMAGE}"
 
 install-deps:
-	go get -u github.com/tools/godep
 	go get -u github.com/onsi/ginkgo/ginkgo  # installs the ginkgo CLI
 	go get -u github.com/onsi/gomega         # fetches the matcher library
-
-godep-update:
-	go get golang.org/x/sys/unix # Explicit because not added by mac
-	godep get $(GO_PACKAGES)
-	godep update -goversion
-	godep update ./...
-	godep save

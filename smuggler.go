@@ -99,7 +99,7 @@ func openSmugglerLog() *utils.TempFileLogger {
 	smugglerLogFileName := utils.GetEnvOrDefault("SMUGGLER_LOG", "/tmp/smuggler.log")
 	tempFileLogger, err := utils.NewTempFileLogger(smugglerLogFileName)
 	if err != nil {
-		utils.Panic("opening log '%s': %s", smugglerLogFileName, err)
+		utils.Panic("opening log '%s': %s", smugglerLogFileName, err.Error())
 	}
 	return tempFileLogger
 }
@@ -108,7 +108,7 @@ func openSmugglerLog() *utils.TempFileLogger {
 func inputRequest(requestType smuggler.RequestType) (*smuggler.ResourceRequest, []byte) {
 	input, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		utils.Panic("reading request from stdin", err)
+		utils.Panic("reading request from stdin: %s", err.Error())
 	}
 
 	smugglerConfig := findAndReadSmugglerConfig()
