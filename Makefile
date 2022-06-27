@@ -1,4 +1,4 @@
-SMUGGLER_DOCKER_TAG:=alpine3.6
+SMUGGLER_DOCKER_TAG:=alpine3.16
 SMUGGLER_DOCKER_REPOSITORY:=redfactorlabs/concourse-smuggler-resource
 SMUGGLER_DOCKER_IMAGE:=$(SMUGGLER_DOCKER_REPOSITORY):$(SMUGGLER_DOCKER_TAG)
 
@@ -39,13 +39,5 @@ push-docker: build-docker
 	docker push "${SMUGGLER_DOCKER_IMAGE}"
 
 install-deps:
-	go get -u github.com/tools/godep
 	go get -u github.com/onsi/ginkgo/ginkgo  # installs the ginkgo CLI
 	go get -u github.com/onsi/gomega         # fetches the matcher library
-
-godep-update:
-	go get golang.org/x/sys/unix # Explicit because not added by mac
-	godep get $(GO_PACKAGES)
-	godep update -goversion
-	godep update ./...
-	godep save

@@ -4,7 +4,7 @@
 #
 # Build concourse smuggler
 #
-FROM golang:1.9-alpine
+FROM golang:1.18-alpine
 
 ARG SMUGGLER_GIT_URL=https://github.com/redfactorlabs/concourse-smuggler-resource
 ARG SMUGGLER_GIT_BRANCH=master
@@ -28,7 +28,7 @@ RUN cd /go/src/github.com/redfactorlabs/concourse-smuggler-resource && \
 #
 
 # Use your favorite base image
-FROM alpine:3.6
+FROM alpine:3.16
 
 # Add some stuff to your container
 # Our base container will have some handy tooling
